@@ -5,157 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NVIDIA NIM Proxy Dashboard</title>
     <style>
-        /* --- KEEPING YOUR ORIGINAL STYLES --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { background: white; border-radius: 15px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        .header h1 { color: #667eea; margin-bottom: 10px; font-size: 2.5em; }
-        .header p { color: #666; font-size: 1.1em; }
-        .config-section { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        .config-section h2 { color: #667eea; margin-bottom: 20px; font-size: 1.8em; display: flex; align-items: center; gap: 10px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 600; }
-        .input-group input, .input-group select { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border-color 0.3s; }
-        .input-group input:focus, .input-group select:focus { outline: none; border-color: #667eea; }
-        
-        /* SEARCH BOX SPECIFIC STYLE */
-        #modelSearchInput {
-            background-color: #f0f4ff;
-            border: 2px solid #667eea;
-            font-weight: 500;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
-        button { padding: 12px 25px; border: none; border-radius: 8px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-secondary { background: #48bb78; color: white; }
-        .btn-info { background: #4299e1; color: white; }
-        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
-        .status-online { background: #48bb78; box-shadow: 0 0 10px rgba(72, 187, 120, 0.5); }
-        .status-offline { background: #f56565; box-shadow: 0 0 10px rgba(245, 101, 101, 0.5); }
-        .status-checking { background: #ed8936; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .results-section { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
-        .results-section h3 { color: #667eea; margin-bottom: 15px; font-size: 1.5em; }
-        .status-card { background: #f7fafc; border-left: 4px solid #667eea; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-        .model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 20px; }
-        .model-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
-        .model-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
-        .copy-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 5px; font-size: 0.85em; margin-top: 10px; cursor: pointer; }
-        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .error-message { background: #fed7d7; color: #c53030; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #f56565; }
-        .success-message { background: #c6f6d5; color: #22543d; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #48bb78; }
-        .info-box { background: #bee3f8; color: #2c5282; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #4299e1; }
-        .chat-container { background: white; border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); display: none; }
-        .chat-container.active { display: block; }
-        .chat-messages { height: 500px; overflow-y: auto; border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 20px; background: #f9fafb; }
-        .message { margin-bottom: 20px; display: flex; gap: 15px; }
-        .message-content { flex: 1; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .chat-input-area { display: flex; gap: 10px; }
-        .chat-input { flex: 1; padding: 15px; border: 2px solid #e0e0e0; border-radius: 10px; min-height: 60px; }
-        .send-btn { padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 NVIDIA NIM Proxy Dashboard</h1>
-            <p>Monitor status, search models, and roleplay</p>
-        </div>
-
-        <div class="config-section">
-            <h2>⚙️ Configuration</h2>
-            <div class="input-group">
-                <label for="proxyUrl">Proxy Base URL</label>
-                <input type="text" id="proxyUrl" placeholder="https://your-proxy.up.railway.app">
-            </div>
-            <div class="button-group">
-                <button class="btn-primary" onclick="checkHealth()">🏥 Check Health</button>
-                <button class="btn-secondary" onclick="fetchModels()">🤖 Load Models</button>
-                <button class="btn-info" onclick="toggleChat()">💬 Open Chat</button>
-            </div>
-        </div>
-
-        <div class="chat-container" id="chatContainer">
-            <h3>💬 Chat with AI</h3>
-            <div class="chat-messages" id="chatMessages"></div>
-            <div class="chat-input-area">
-                <textarea class="chat-input" id="chatInput" placeholder="Type your message..."></textarea>
-                <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
-            </div>
-        </div>
-
-        <div class="results-section" id="modelsSection" style="display: none;">
-            <h3>Available Models</h3>
-            
-            <div class="input-group">
-                <input type="text" id="modelSearchInput" placeholder="🔍 Type to filter models (e.g. 'deepseek', 'llama', '70b')..." onkeyup="filterModels()">
-            </div>
-
-            <div class="info-box">
-                <strong>💡 Tip:</strong> Type above to instantly filter the list.
-            </div>
-            <div id="modelsResults"></div>
-        </div>
-    </div>
-
-    <script>
-        // --- LOGIC ---
-        let availableModels = [];
-
-        function filterModels() {
-            const term = document.getElementById('modelSearchInput').value.toLowerCase();
-            const cards = document.querySelectorAll('.model-card');
-            let found = 0;
-
-            cards.forEach(card => {
-                const text = card.innerText.toLowerCase();
-                if (text.includes(term)) {
-                    card.style.display = 'block';
-                    found++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-            
-            const msg = document.querySelector('.success-message');
-            if(msg) msg.innerText = `✅ Showing ${found} models matching "${term}"`;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
         }
 
-        async function fetchModels() {
-            const baseUrl = document.getElementById('proxyUrl').value.trim();
-            const results = document.getElementById('modelsResults');
-            document.getElementById('modelsSection').style.display = 'block';
-            results.innerHTML = '<p>Loading...</p>';
-
-            try {
-                const response = await fetch(`${baseUrl}/v1/models`);
-                const data = await response.json();
-                availableModels = data.data;
-
-                results.innerHTML = `
-                    <div class="success-message">✅ Found ${data.data.length} models</div>
-                    <div class="model-grid">
-                        ${data.data.map(m => `
-                            <div class="model-card">
-                                <h4>${m.id}</h4>
-                                <p>Owner: ${m.owned_by}</p>
-                                <button class="copy-btn" onclick="navigator.clipboard.writeText('${m.id}')">📋 Copy</button>
-                            </div>
-                        `).join('')}
-                    </div>`;
-                // Reset search box
-                document.getElementById('modelSearchInput').value = '';
-            } catch (e) {
-                results.innerHTML = `<div class="error-message">Error: ${e.message}</div>`;
-            }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        // Add other functions (checkHealth, toggleChat, etc.) here as per your original file
-        function toggleChat() { document.getElementById('chatContainer').classList.toggle('active'); }
-        function checkHealth() { alert("Checking health..."); }
-    </script>
-</body>
-</html>
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .config-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .config-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Styling for the new search box */

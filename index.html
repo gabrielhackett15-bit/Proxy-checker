@@ -511,6 +511,10 @@
                     <h4>Global Tokens Used</h4>
                     <div class="value" id="globalTokenDisplay">---</div>
                 </div>
+                <div class="stat-card" style="border-top-color: #ed8936;">
+                    <h4>Estimated Cost (USD)</h4>
+                    <div class="value" id="costDisplay">$0.0000</div>
+                </div>
                 <div class="stat-card" style="border-top-color: #48bb78;">
                     <h4>Recent Requests</h4>
                     <div class="value" id="requestCountDisplay">---</div>
@@ -619,7 +623,7 @@
             }
         };
 
-        // --- NEW DASHBOARD LOGIC ---
+        // --- UPDATED DASHBOARD LOGIC WITH COST CALCULATION ---
         async function loadDashboard() {
             const baseUrl = getProxyUrl();
             if (!baseUrl) return;
@@ -628,20 +632,26 @@
                 // 1. Fetch Global Count
                 const globalRes = await fetch(`${baseUrl}/usage/global`);
                 const globalData = await globalRes.json();
-                document.getElementById('globalTokenDisplay').innerText = (globalData.total || 0).toLocaleString();
+                const totalTokens = globalData.total || 0;
+                document.getElementById('globalTokenDisplay').innerText = totalTokens.toLocaleString();
 
-                // 2. Fetch History for Chart
+                // 2. Calculate Cost (Example: $5.00 per 1M tokens)
+                const pricePerMillion = 5.00;
+                const estimatedCost = (totalTokens / 1000000) * pricePerMillion;
+                document.getElementById('costDisplay').innerText = `$${estimatedCost.toFixed(4)}`;
+
+                // 3. Fetch History for Chart
                 const historyRes = await fetch(`${baseUrl}/usage/history`);
                 const historyData = await historyRes.json();
-                
+
                 document.getElementById('requestCountDisplay').innerText = historyData.length;
 
                 const labels = historyData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
                 const values = historyData.map(d => d.tokens_used);
 
-                // 3. Render/Update Chart
+                // 4. Render/Update Chart
                 const ctx = document.getElementById('usageChart').getContext('2d');
-                
+
                 if (usageChart) {
                     usageChart.destroy(); // Clear old chart
                 }
@@ -951,7 +961,7 @@
 
                     localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
                     renderMessages();
-                    
+
                     // Trigger a dashboard sync after a successful message to see token update
                     setTimeout(loadDashboard, 1500); 
                 } else {

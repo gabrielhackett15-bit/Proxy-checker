@@ -12,12 +12,26 @@
             box-sizing: border-box;
         }
 
+        /* --- DARK MODE ADAPTATION --- */
+        html.dark-mode {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        /* Keep images and charts from being inverted */
+        html.dark-mode img, 
+        html.dark-mode canvas,
+        html.dark-mode .model-card,
+        html.dark-mode .user-avatar,
+        html.dark-mode .assistant-avatar {
+            filter: invert(1) hue-rotate(180deg);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
             color: #333;
+            transition: background 0.3s ease;
         }
 
         .container {
@@ -31,6 +45,23 @@
             padding: 30px;
             margin-bottom: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: #f0f0f0;
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .header h1 {
@@ -501,6 +532,7 @@
 <body>
     <div class="container">
         <div class="header">
+            <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌓</button>
             <h1>🚀 NVIDIA NIM Proxy Dashboard</h1>
             <p>Monitor your proxy status, discover available models, and chat with AI</p>
         </div>
@@ -609,7 +641,18 @@
         let availableModels = [];
         let usageChart = null; // Store chart instance
 
+        // New Dark Mode Function
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDark);
+        }
+
         window.onload = function() {
+            // Check for saved theme
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+
             const savedUrl = localStorage.getItem('proxyUrl');
             if (savedUrl) {
                 document.getElementById('proxyUrl').value = savedUrl;

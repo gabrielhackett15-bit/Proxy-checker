@@ -430,16 +430,16 @@
             .header h1 {
                 font-size: 1.8em;
             }
-            
+
             .button-group {
                 flex-direction: column;
             }
-            
+
             button {
                 width: 100%;
                 justify-content: center;
             }
-            
+
             .model-grid {
                 grid-template-columns: 1fr;
             }
@@ -527,6 +527,11 @@
 
         <div class="results-section" id="modelsSection" style="display: none;">
             <h3>Available Models</h3>
+            <!-- Search Feature Added Here -->
+            <div class="input-group" style="margin-top: 10px; margin-bottom: 15px;">
+                <label for="modelSearchInput">🔍 Search Models</label>
+                <input type="text" id="modelSearchInput" placeholder="Filter by name (e.g., 'llama', 'mistral', '70b')..." onkeyup="filterModels()">
+            </div>
             <div class="info-box">
                 <strong>💡 How to use:</strong> Click "Copy" on any model card to copy the model name, or click "Use in Chat" to select it for chatting.
             </div>
@@ -543,7 +548,7 @@
             if (savedUrl) {
                 document.getElementById('proxyUrl').value = savedUrl;
             }
-            
+
             const savedHistory = localStorage.getItem('chatHistory');
             if (savedHistory) {
                 conversationHistory = JSON.parse(savedHistory);
@@ -562,13 +567,43 @@
             return cleanUrl;
         }
 
+        // Search Filter Function Added Here
+        function filterModels() {
+            const searchTerm = document.getElementById('modelSearchInput').value.toLowerCase();
+            const modelCards = document.querySelectorAll('.model-card');
+            let visibleCount = 0;
+
+            modelCards.forEach(card => {
+                const modelId = card.querySelector('h4').textContent.toLowerCase();
+                const modelOwner = card.querySelector('p').textContent.toLowerCase();
+                
+                if (modelId.includes(searchTerm) || modelOwner.includes(searchTerm)) {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Update result count message
+            const successMsg = document.querySelector('#modelsResults .success-message');
+            if (successMsg) {
+                const total = availableModels.length;
+                if (searchTerm) {
+                    successMsg.innerHTML = `✅ Found ${visibleCount} models matching "${searchTerm}"`;
+                } else {
+                    successMsg.innerHTML = `✅ Found ${total} available models`;
+                }
+            }
+        }
+
         async function checkHealth() {
             const baseUrl = getProxyUrl();
             if (!baseUrl) return;
 
             const healthSection = document.getElementById('healthSection');
             const healthResults = document.getElementById('healthResults');
-            
+
             healthSection.style.display = 'block';
             healthResults.innerHTML = '<div class="status-card"><p><span class="status-indicator status-checking"></span>Checking proxy health...</p></div>';
 
@@ -609,7 +644,7 @@
 
             const modelsSection = document.getElementById('modelsSection');
             const modelsResults = document.getElementById('modelsResults');
-            
+
             modelsSection.style.display = 'block';
             modelsResults.innerHTML = '<div class="status-card"><p><span class="loading"></span> Loading available models...</p></div>';
 
@@ -620,7 +655,11 @@
                 if (response.ok && data.data && data.data.length > 0) {
                     availableModels = data.data;
                     updateModelSelect();
-                    
+
+                    // Clear search input when reloading models
+                    const searchInput = document.getElementById('modelSearchInput');
+                    if (searchInput) searchInput.value = '';
+
                     const modelCards = data.data.map(model => `
                         <div class="model-card">
                             <h4>${model.id}</h4>
@@ -689,7 +728,7 @@
 
         function renderMessages() {
             const chatMessages = document.getElementById('chatMessages');
-            
+
             if (conversationHistory.length === 0) {
                 chatMessages.innerHTML = `
                     <div style="text-align: center; color: #999; margin-top: 200px;">
@@ -734,7 +773,7 @@
             const modelSelect = document.getElementById('modelSelect');
             const chatInput = document.getElementById('chatInput');
             const sendBtn = document.getElementById('sendBtn');
-            
+
             const model = modelSelect.value;
             const message = chatInput.value.trim();
 
@@ -756,7 +795,7 @@
             chatInput.value = '';
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<span class="loading"></span> Sending...';
-            
+
             renderMessages();
 
             try {
@@ -781,7 +820,7 @@
                         role: 'assistant',
                         content: assistantMessage
                     });
-                    
+
                     localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
                     renderMessages();
                 } else {
@@ -806,7 +845,7 @@
                 const originalText = originalButton.innerHTML;
                 originalButton.innerHTML = '✅ Copied!';
                 originalButton.style.background = 'rgba(72, 187, 120, 0.3)';
-                
+
                 setTimeout(() => {
                     originalButton.innerHTML = originalText;
                     originalButton.style.background = 'rgba(255,255,255,0.2)';
@@ -834,3 +873,4 @@
     </script>
 </body>
 </html>
+

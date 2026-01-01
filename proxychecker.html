@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA NIM Proxy Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .config-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .config-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-info {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #48bb78;
+            box-shadow: 0 0 10px rgba(72, 187, 120, 0.5);
+        }
+
+        .status-offline {
+            background: #f56565;
+            box-shadow: 0 0 10px rgba(245, 101, 101, 0.5);
+        }
+
+        .status-checking {
+            background: #ed8936;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .results-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .status-card {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .status-card p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .status-card strong {
+            color: #333;
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .model-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .model-card h4 {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .model-card p {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #f56565;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .info-box {
+            background: #bee3f8;
+            color: #2c5282;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .model-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 NVIDIA NIM Proxy Dashboard</h1>
+            <p>Monitor your proxy status and discover available models</p>
+        </div>
+
+        <div class="config-section">
+            <h2>⚙️ Configuration</h2>
+            <div class="input-group">
+                <label for="proxyUrl">Proxy Base URL</label>
+                <input type="text" id="proxyUrl" placeholder="https://your-proxy.up.railway.app" value="">
+            </div>
+            <div class="button-group">
+                <button class="btn-primary" onclick="checkHealth()">
+                    <span>🏥</span> Check Health
+                </button>
+                <button class="btn-secondary" onclick="fetchModels()">
+                    <span>🤖</span> Load Models
+                </button>
+                <button class="btn-info" onclick="openHealthPage()">
+                    <span>🌐</span> Open Health Page
+                </button>
+                <button class="btn-info" onclick="openModelsPage()">
+                    <span>📋</span> Open Models API
+                </button>
+            </div>
+        </div>
+
+        <div class="results-section" id="healthSection" style="display: none;">
+            <h3>Health Status</h3>
+            <div id="healthResults"></div>
+        </div>
+
+        <div class="results-section" id="modelsSection" style="display: none;">
+            <h3>Available Models</h3>
+            <div class="info-box">
+                <strong>💡 How to use:</strong> Click "Copy" on any model card to copy the model name, then paste it into Janitor AI's model field.
+            </div>
+            <div id="modelsResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved URL from localStorage
+        window.onload = function() {
+            const savedUrl = localStorage.getItem('proxyUrl');
+            if (savedUrl) {
+                document.getElementById('proxyUrl').value = savedUrl;
+            }
+        };
+
+        function getProxyUrl() {
+            const url = document.getElementById('proxyUrl').value.trim();
+            if (!url) {
+                showError('Please enter a proxy URL');
+                return null;
+            }
+            // Remove trailing slash
+            const cleanUrl = url.replace(/\/$/, '');
+            // Save to localStorage
+            localStorage.setItem('proxyUrl', cleanUrl);
+            return cleanUrl;
+        }
+
+        async function checkHealth() {
+            const baseUrl = getProxyUrl();
+            if (!baseUrl) return;
+
+            const healthSection = document.getElementById('healthSection');
+            const healthResults = document.getElementById('healthResults');
+            
+            healthSection.style.display = 'block';
+            healthResults.innerHTML = '<div class="status-card"><p><span class="status-indicator status-checking"></span>Checking proxy health...</p></div>';
+
+            try {
+                const response = await fetch(`${baseUrl}/health`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    healthResults.innerHTML = `
+                        <div class="status-card">
+                            <p><span class="status-indicator status-online"></span><strong>Status:</strong> ${data.status.toUpperCase()}</p>
+                            <p><strong>Service:</strong> ${data.service}</p>
+                            <p><strong>Reasoning Display:</strong> ${data.reasoning_display ? '✅ Enabled' : '❌ Disabled'}</p>
+                            <p><strong>Thinking Mode:</strong> ${data.thinking_mode ? '✅ Enabled' : '❌ Disabled'}</p>
+                        </div>
+                        <div class="success-message">✅ Proxy is online and working perfectly!</div>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                healthResults.innerHTML = `
+                    <div class="status-card">
+                        <p><span class="status-indicator status-offline"></span><strong>Status:</strong> OFFLINE</p>
+                    </div>
+                    <div class="error-message">❌ Error: ${error.message}<br><br>
+                    <strong>Troubleshooting:</strong><br>
+                    • Make sure your proxy URL is correct<br>
+                    • Check if your Railway deployment is running<br>
+                    • Verify the URL doesn't have /v1 at the end</div>
+                `;
+            }
+        }
+
+        async function fetchModels() {
+            const baseUrl = getProxyUrl();
+            if (!baseUrl) return;
+
+            const modelsSection = document.getElementById('modelsSection');
+            const modelsResults = document.getElementById('modelsResults');
+            
+            modelsSection.style.display = 'block';
+            modelsResults.innerHTML = '<div class="status-card"><p><span class="loading"></span> Loading available models...</p></div>';
+
+            try {
+                const response = await fetch(`${baseUrl}/v1/models`);
+                const data = await response.json();
+
+                if (response.ok && data.data && data.data.length > 0) {
+                    const modelCards = data.data.map(model => `
+                        <div class="model-card">
+                            <h4>${model.id}</h4>
+                            <p>Owner: ${model.owned_by}</p>
+                            <p>Type: ${model.object}</p>
+                            <button class="copy-btn" onclick="copyModelName('${model.id}')">
+                                📋 Copy Model Name
+                            </button>
+                        </div>
+                    `).join('');
+
+                    modelsResults.innerHTML = `
+                        <div class="success-message">
+                            ✅ Found ${data.data.length} available models
+                        </div>
+                        <div class="model-grid">
+                            ${modelCards}
+                        </div>
+                    `;
+                } else {
+                    throw new Error('No models found');
+                }
+            } catch (error) {
+                modelsResults.innerHTML = `
+                    <div class="error-message">❌ Error loading models: ${error.message}<br><br>
+                    <strong>Troubleshooting:</strong><br>
+                    • Run "Check Health" first to verify proxy is working<br>
+                    • Make sure your proxy is deployed correctly<br>
+                    • Check Railway logs for errors</div>
+                `;
+            }
+        }
+
+        function copyModelName(modelName) {
+            navigator.clipboard.writeText(modelName).then(() => {
+                // Show temporary success message
+                const originalButton = event.target;
+                const originalText = originalButton.innerHTML;
+                originalButton.innerHTML = '✅ Copied!';
+                originalButton.style.background = 'rgba(72, 187, 120, 0.3)';
+                
+                setTimeout(() => {
+                    originalButton.innerHTML = originalText;
+                    originalButton.style.background = 'rgba(255,255,255,0.2)';
+                }, 2000);
+            }).catch(err => {
+                alert('Failed to copy: ' + err);
+            });
+        }
+
+        function openHealthPage() {
+            const baseUrl = getProxyUrl();
+            if (!baseUrl) return;
+            window.open(`${baseUrl}/health`, '_blank');
+        }
+
+        function openModelsPage() {
+            const baseUrl = getProxyUrl();
+            if (!baseUrl) return;
+            window.open(`${baseUrl}/v1/models`, '_blank');
+        }
+
+        function showError(message) {
+            alert(message);
+        }
+    </script>
+</body>
+  </html>

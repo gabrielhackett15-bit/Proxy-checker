@@ -6,32 +6,42 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>NVIDIA NIM Proxy Dashboard</title>
     <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: white;
+            --text-main: #333;
+            --text-muted: #666;
+            --input-border: #e0e0e0;
+            --stat-card-bg: #f7fafc;
+            --chat-bg: #f9fafb;
+            --accent: #667eea;
+        }
+
+        /* --- DARK MODE THEME --- */
+        html.dark-mode {
+            --bg-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            --card-bg: #2d3748;
+            --text-main: #f7fafc;
+            --text-muted: #cbd5e0;
+            --input-border: #4a5568;
+            --stat-card-bg: #1a202c;
+            --chat-bg: #1a202c;
+            --accent: #a3bffa;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        /* --- DARK MODE ADAPTATION --- */
-        html.dark-mode {
-            filter: invert(1) hue-rotate(180deg);
-        }
-        /* Keep images and charts from being inverted */
-        html.dark-mode img, 
-        html.dark-mode canvas,
-        html.dark-mode .model-card,
-        html.dark-mode .user-avatar,
-        html.dark-mode .assistant-avatar {
-            filter: invert(1) hue-rotate(180deg);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: var(--bg-gradient);
             min-height: 100vh;
             padding: 20px;
-            color: #333;
-            transition: background 0.3s ease;
+            color: var(--text-main);
         }
 
         .container {
@@ -40,44 +50,47 @@
         }
 
         .header {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 30px;
             margin-bottom: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        /* Theme Toggle Button */
-        .theme-toggle {
-            position: absolute;
-            top: 30px;
-            right: 30px;
-            background: #f0f0f0;
-            border: none;
-            padding: 10px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2em;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
         }
 
-        .header h1 {
-            color: #667eea;
+        .header-content h1 {
+            color: var(--accent);
             margin-bottom: 10px;
             font-size: 2.5em;
         }
 
-        .header p {
-            color: #666;
+        .header-content p {
+            color: var(--text-muted);
             font-size: 1.1em;
         }
 
-        /* --- NEW DASHBOARD STYLES --- */
-        .dashboard-section {
-            background: white;
+        .theme-toggle {
+            background: var(--stat-card-bg);
+            border: 2px solid var(--input-border);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* --- DASHBOARD SECTIONS --- */
+        .dashboard-section, .config-section, .results-section, .chat-container {
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
             margin-bottom: 20px;
@@ -92,80 +105,47 @@
         }
 
         .stat-card {
-            background: #f7fafc;
+            background: var(--stat-card-bg);
             padding: 20px;
             border-radius: 10px;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid var(--accent);
             text-align: center;
         }
 
         .stat-card h4 {
             font-size: 0.9em;
             text-transform: uppercase;
-            color: #718096;
+            color: var(--text-muted);
             margin-bottom: 5px;
         }
 
         .stat-card .value {
             font-size: 1.8em;
             font-weight: 700;
-            color: #2d3748;
+            color: var(--text-main);
         }
 
-        .chart-container {
-            height: 300px;
-            width: 100%;
-        }
-        /* --------------------------- */
-
-        .config-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-
-        .config-section h2 {
-            color: #667eea;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
+        /* Input Styles */
         .input-group label {
             display: block;
             margin-bottom: 8px;
-            color: #555;
+            color: var(--text-muted);
             font-weight: 600;
         }
 
-        .input-group input, .input-group select {
+        .input-group input, .input-group select, .chat-input {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--input-border);
             border-radius: 8px;
+            background: var(--card-bg);
+            color: var(--text-main);
             font-size: 1em;
-            transition: border-color 0.3s;
         }
 
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
+        /* --- BUTTONS --- */
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        
         button {
             padding: 12px 25px;
             border: none;
@@ -179,362 +159,64 @@
             gap: 8px;
         }
 
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #48bb78; color: white; }
+        .btn-info { background: #4299e1; color: white; }
 
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-secondary {
-            background: #48bb78;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #38a169;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
-        }
-
-        .btn-info {
-            background: #4299e1;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background: #3182ce;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.4);
-        }
-
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-online {
-            background: #48bb78;
-            box-shadow: 0 0 10px rgba(72, 187, 120, 0.5);
-        }
-
-        .status-offline {
-            background: #f56565;
-            box-shadow: 0 0 10px rgba(245, 101, 101, 0.5);
-        }
-
-        .status-checking {
-            background: #ed8936;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .results-section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-
-        .results-section h3 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.5em;
-        }
-
-        .status-card {
-            background: #f7fafc;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .status-card p {
-            margin: 5px 0;
-            color: #555;
-        }
-
-        .status-card strong {
-            color: #333;
-        }
-
-        .model-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .model-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .model-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .model-card h4 {
-            font-size: 1.2em;
-            margin-bottom: 10px;
-        }
-
-        .model-card p {
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
-
-        .copy-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-size: 0.85em;
-            margin-top: 10px;
-        }
-
-        .copy-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            background: #fed7d7;
-            color: #c53030;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid #f56565;
-        }
-
-        .success-message {
-            background: #c6f6d5;
-            color: #22543d;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid #48bb78;
-        }
-
-        .info-box {
-            background: #bee3f8;
-            color: #2c5282;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid #4299e1;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        /* Chat Styles */
-        .chat-container {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            display: none;
-        }
-
-        .chat-container.active {
-            display: block;
-        }
-
+        /* --- CHAT STYLES --- */
         .chat-messages {
             height: 500px;
             overflow-y: auto;
-            border: 2px solid #e0e0e0;
+            border: 2px solid var(--input-border);
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
-            background: #f9fafb;
-        }
-
-        .message {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 15px;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2em;
-            flex-shrink: 0;
-        }
-
-        .user-avatar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .assistant-avatar {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-            color: white;
+            background: var(--chat-bg);
         }
 
         .message-content {
             flex: 1;
-            background: white;
+            background: var(--card-bg);
             padding: 15px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            color: var(--text-main);
         }
 
-        .message-role {
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #667eea;
-        }
+        .message-text { color: var(--text-main); }
 
-        .message-text {
-            color: #333;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-
-        .chat-input-area {
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 1em;
-            resize: vertical;
-            min-height: 60px;
-            font-family: inherit;
-        }
-
-        .chat-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .send-btn {
-            padding: 15px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .model-card {
+            background: var(--accent);
             color: white;
-            border: none;
+            padding: 20px;
             border-radius: 10px;
-            font-size: 1em;
-            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
         }
 
-        .send-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        .status-card {
+            background: var(--stat-card-bg);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
 
-        .send-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .chat-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-
-        .chat-controls select {
-            flex: 1;
-        }
+        .chart-container { height: 300px; }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            button {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .model-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .chat-input-area {
-                flex-direction: column;
-            }
-
-            .send-btn {
-                width: 100%;
-            }
+            .header { flex-direction: column; text-align: center; gap: 20px; }
+            .header h1 { font-size: 1.8em; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
+            <div class="header-content">
+                <h1>🚀 NVIDIA NIM Proxy</h1>
+                <p>Monitor status, models, and chat with AI</p>
+            </div>
             <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌓</button>
-            <h1>🚀 NVIDIA NIM Proxy Dashboard</h1>
-            <p>Monitor your proxy status, discover available models, and chat with AI</p>
         </div>
 
         <div class="dashboard-section" id="dashboardSection">
@@ -556,65 +238,31 @@
                 <canvas id="usageChart"></canvas>
             </div>
         </div>
+
         <div class="config-section">
             <h2>⚙️ Configuration</h2>
             <div class="input-group">
                 <label for="proxyUrl">Proxy Base URL</label>
-                <input type="text" id="proxyUrl" placeholder="https://your-proxy.up.railway.app" value="">
+                <input type="text" id="proxyUrl" placeholder="https://your-proxy.up.railway.app">
             </div>
             <div class="button-group">
-                <button class="btn-primary" onclick="checkHealth()">
-                    <span>🏥</span> Check Health
-                </button>
-                <button class="btn-secondary" onclick="fetchModels()">
-                    <span>🤖</span> Load Models
-                </button>
-                <button class="btn-info" onclick="toggleChat()">
-                    <span>💬</span> Open Chat
-                </button>
-                <button class="btn-info" onclick="openHealthPage()">
-                    <span>🌐</span> Open Health Page
-                </button>
-                <button class="btn-info" onclick="openModelsPage()">
-                    <span>📋</span> Open Models API
-                </button>
-                <button class="btn-primary" onclick="loadDashboard()" style="background: #718096;">
-                    <span>🔄</span> Sync Stats
-                </button>
+                <button class="btn-primary" onclick="checkHealth()">🏥 Check Health</button>
+                <button class="btn-secondary" onclick="fetchModels()">🤖 Load Models</button>
+                <button class="btn-info" onclick="toggleChat()">💬 Open Chat</button>
+                <button class="btn-primary" onclick="loadDashboard()" style="background: #718096;">🔄 Sync Stats</button>
             </div>
         </div>
 
-        <div class="chat-container" id="chatContainer">
+        <div class="chat-container" id="chatContainer" style="display:none;">
             <h3>💬 Chat with AI</h3>
-            <div class="info-box">
-                <strong>💡 Tip:</strong> Load models first to see available options. Select a model and start chatting!
+            <div class="chat-controls" style="display: flex; gap: 10px; margin: 15px 0;">
+                <select id="modelSelect"><option value="">Load models first...</option></select>
+                <button class="btn-secondary" onclick="clearChat()">🗑️ Clear</button>
             </div>
-            <div class="chat-controls">
-                <div class="input-group" style="margin: 0; flex: 1;">
-                    <label for="modelSelect">Select Model</label>
-                    <select id="modelSelect">
-                        <option value="">Load models first...</option>
-                    </select>
-                </div>
-                <button class="btn-secondary" onclick="clearChat()" style="margin-top: 24px;">
-                    🗑️ Clear Chat
-                </button>
-            </div>
-            <div class="chat-messages" id="chatMessages">
-                <div style="text-align: center; color: #999; margin-top: 200px;">
-                    Start a conversation by typing a message below
-                </div>
-            </div>
-            <div class="chat-input-area">
-                <textarea 
-                    class="chat-input" 
-                    id="chatInput" 
-                    placeholder="Type your message here..."
-                    onkeydown="handleKeyPress(event)"
-                ></textarea>
-                <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-                    Send 📤
-                </button>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div class="chat-input-area" style="display: flex; gap: 10px;">
+                <textarea class="chat-input" id="chatInput" placeholder="Type your message..."></textarea>
+                <button class="btn-primary" id="sendBtn" onclick="sendMessage()">Send</button>
             </div>
         </div>
 
@@ -625,13 +273,6 @@
 
         <div class="results-section" id="modelsSection" style="display: none;">
             <h3>Available Models</h3>
-            <div class="input-group" style="margin-top: 10px; margin-bottom: 15px;">
-                <label for="modelSearchInput">🔍 Search Models</label>
-                <input type="text" id="modelSearchInput" placeholder="Filter by name (e.g., 'llama', 'mistral', '70b')..." onkeyup="filterModels()">
-            </div>
-            <div class="info-box">
-                <strong>💡 How to use:</strong> Click "Copy" on any model card to copy the model name, or click "Use in Chat" to select it for chatting.
-            </div>
             <div id="modelsResults"></div>
         </div>
     </div>
@@ -639,420 +280,140 @@
     <script>
         let conversationHistory = [];
         let availableModels = [];
-        let usageChart = null; // Store chart instance
+        let usageChart = null;
 
-        // New Dark Mode Function
         function toggleDarkMode() {
             const isDark = document.documentElement.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', isDark);
+            if(usageChart) loadDashboard(); // Redraw chart for visibility
         }
 
         window.onload = function() {
-            // Check for saved theme
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.documentElement.classList.add('dark-mode');
-            }
-
+            if (localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark-mode');
             const savedUrl = localStorage.getItem('proxyUrl');
             if (savedUrl) {
                 document.getElementById('proxyUrl').value = savedUrl;
-                loadDashboard(); // Load stats on startup if URL exists
-            }
-
-            const savedHistory = localStorage.getItem('chatHistory');
-            if (savedHistory) {
-                conversationHistory = JSON.parse(savedHistory);
-                renderMessages();
+                loadDashboard();
             }
         };
 
-        // --- UPDATED DASHBOARD LOGIC WITH COST CALCULATION ---
         async function loadDashboard() {
             const baseUrl = getProxyUrl();
             if (!baseUrl) return;
-
             try {
-                // 1. Fetch Global Count
                 const globalRes = await fetch(`${baseUrl}/usage/global`);
                 const globalData = await globalRes.json();
                 const totalTokens = globalData.total || 0;
                 document.getElementById('globalTokenDisplay').innerText = totalTokens.toLocaleString();
+                document.getElementById('costDisplay').innerText = `$${((totalTokens / 1000000) * 5.00).toFixed(4)}`;
 
-                // 2. Calculate Cost (Example: $5.00 per 1M tokens)
-                const pricePerMillion = 5.00;
-                const estimatedCost = (totalTokens / 1000000) * pricePerMillion;
-                document.getElementById('costDisplay').innerText = `$${estimatedCost.toFixed(4)}`;
-
-                // 3. Fetch History for Chart
                 const historyRes = await fetch(`${baseUrl}/usage/history`);
                 const historyData = await historyRes.json();
-
                 document.getElementById('requestCountDisplay').innerText = historyData.length;
 
-                const labels = historyData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
-                const values = historyData.map(d => d.tokens_used);
-
-                // 4. Render/Update Chart
                 const ctx = document.getElementById('usageChart').getContext('2d');
-
-                if (usageChart) {
-                    usageChart.destroy(); // Clear old chart
-                }
-
+                const isDark = document.documentElement.classList.contains('dark-mode');
+                
+                if (usageChart) usageChart.destroy();
                 usageChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: labels,
+                        labels: historyData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})),
                         datasets: [{
-                            label: 'Tokens Used per Chat',
-                            data: values,
+                            label: 'Tokens Used',
+                            data: historyData.map(d => d.tokens_used),
                             borderColor: '#667eea',
                             backgroundColor: 'rgba(102, 126, 234, 0.1)',
                             fill: true,
-                            tension: 0.4,
-                            pointRadius: 4
+                            tension: 0.4
                         }]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false }
-                        },
                         scales: {
-                            y: { 
-                                beginAtZero: true,
-                                grid: { color: '#f0f0f0' }
-                            },
-                            x: {
-                                grid: { display: false }
-                            }
+                            y: { grid: { color: isDark ? '#4a5568' : '#f0f0f0' }, ticks: { color: isDark ? '#cbd5e0' : '#666' } },
+                            x: { ticks: { color: isDark ? '#cbd5e0' : '#666' } }
                         }
                     }
                 });
-            } catch (err) {
-                console.error('Dashboard Error:', err);
-            }
+            } catch (err) { console.error('Dashboard Error:', err); }
         }
-        // ---------------------------
 
         function getProxyUrl() {
             const url = document.getElementById('proxyUrl').value.trim();
-            if (!url) {
-                showError('Please enter a proxy URL');
-                return null;
-            }
+            if (!url) return null;
             const cleanUrl = url.replace(/\/$/, '');
             localStorage.setItem('proxyUrl', cleanUrl);
             return cleanUrl;
         }
 
-        // Search Filter Function Added Here
-        function filterModels() {
-            const searchTerm = document.getElementById('modelSearchInput').value.toLowerCase();
-            const modelCards = document.querySelectorAll('.model-card');
-            let visibleCount = 0;
-
-            modelCards.forEach(card => {
-                const modelId = card.querySelector('h4').textContent.toLowerCase();
-                const modelOwner = card.querySelector('p').textContent.toLowerCase();
-
-                if (modelId.includes(searchTerm) || modelOwner.includes(searchTerm)) {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-
-            // Update result count message
-            const successMsg = document.querySelector('#modelsResults .success-message');
-            if (successMsg) {
-                const total = availableModels.length;
-                if (searchTerm) {
-                    successMsg.innerHTML = `✅ Found ${visibleCount} models matching "${searchTerm}"`;
-                } else {
-                    successMsg.innerHTML = `✅ Found ${total} available models`;
-                }
-            }
-        }
-
         async function checkHealth() {
-            const baseUrl = getProxyUrl();
-            if (!baseUrl) return;
-
-            const healthSection = document.getElementById('healthSection');
-            const healthResults = document.getElementById('healthResults');
-
-            healthSection.style.display = 'block';
-            healthResults.innerHTML = '<div class="status-card"><p><span class="status-indicator status-checking"></span>Checking proxy health...</p></div>';
-
+            const baseUrl = getProxyUrl(); if (!baseUrl) return;
+            const resSection = document.getElementById('healthSection');
+            resSection.style.display = 'block';
             try {
                 const response = await fetch(`${baseUrl}/health`);
                 const data = await response.json();
-
-                if (response.ok) {
-                    healthResults.innerHTML = `
-                        <div class="status-card">
-                            <p><span class="status-indicator status-online"></span><strong>Status:</strong> ${data.status.toUpperCase()}</p>
-                            <p><strong>Service:</strong> ${data.service}</p>
-                            <p><strong>Reasoning Display:</strong> ${data.reasoning_display ? '✅ Enabled' : '❌ Disabled'}</p>
-                            <p><strong>Thinking Mode:</strong> ${data.thinking_mode ? '✅ Enabled' : '❌ Disabled'}</p>
-                        </div>
-                        <div class="success-message">✅ Proxy is online and working perfectly!</div>
-                    `;
-                    loadDashboard(); // Update stats if health check passes
-                } else {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+                document.getElementById('healthResults').innerHTML = `<div class="status-card">Status: ${data.status.toUpperCase()}<br>Service: ${data.service}</div>`;
             } catch (error) {
-                healthResults.innerHTML = `
-                    <div class="status-card">
-                        <p><span class="status-indicator status-offline"></span><strong>Status:</strong> OFFLINE</p>
-                    </div>
-                    <div class="error-message">❌ Error: ${error.message}<br><br>
-                    <strong>Troubleshooting:</strong><br>
-                    • Make sure your proxy URL is correct<br>
-                    • Check if your Railway deployment is running<br>
-                    • Verify the URL doesn't have /v1 at the end</div>
-                `;
+                document.getElementById('healthResults').innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
             }
         }
 
         async function fetchModels() {
-            const baseUrl = getProxyUrl();
-            if (!baseUrl) return;
-
-            const modelsSection = document.getElementById('modelsSection');
-            const modelsResults = document.getElementById('modelsResults');
-
-            modelsSection.style.display = 'block';
-            modelsResults.innerHTML = '<div class="status-card"><p><span class="loading"></span> Loading available models...</p></div>';
-
+            const baseUrl = getProxyUrl(); if (!baseUrl) return;
+            document.getElementById('modelsSection').style.display = 'block';
             try {
                 const response = await fetch(`${baseUrl}/v1/models`);
                 const data = await response.json();
-
-                if (response.ok && data.data && data.data.length > 0) {
-                    availableModels = data.data;
-                    updateModelSelect();
-
-                    // Clear search input when reloading models
-                    const searchInput = document.getElementById('modelSearchInput');
-                    if (searchInput) searchInput.value = '';
-
-                    const modelCards = data.data.map(model => `
-                        <div class="model-card">
-                            <h4>${model.id}</h4>
-                            <p>Owner: ${model.owned_by}</p>
-                            <p>Type: ${model.object}</p>
-                            <button class="copy-btn" onclick="copyModelName('${model.id}')">
-                                📋 Copy Model Name
-                            </button>
-                            <button class="copy-btn" onclick="selectModelForChat('${model.id}')">
-                                💬 Use in Chat
-                            </button>
-                        </div>
-                    `).join('');
-
-                    modelsResults.innerHTML = `
-                        <div class="success-message">
-                            ✅ Found ${data.data.length} available models
-                        </div>
-                        <div class="model-grid">
-                            ${modelCards}
-                        </div>
-                    `;
-                } else {
-                    throw new Error('No models found');
-                }
-            } catch (error) {
-                modelsResults.innerHTML = `
-                    <div class="error-message">❌ Error loading models: ${error.message}<br><br>
-                    <strong>Troubleshooting:</strong><br>
-                    • Run "Check Health" first to verify proxy is working<br>
-                    • Make sure your proxy is deployed correctly<br>
-                    • Check Railway logs for errors</div>
-                `;
-            }
-        }
-
-        function updateModelSelect() {
-            const select = document.getElementById('modelSelect');
-            select.innerHTML = '<option value="">Select a model...</option>' + 
-                availableModels.map(model => 
-                    `<option value="${model.id}">${model.id}</option>`
-                ).join('');
-        }
-
-        function selectModelForChat(modelId) {
-            document.getElementById('modelSelect').value = modelId;
-            toggleChat();
-            document.getElementById('chatInput').focus();
+                availableModels = data.data;
+                const select = document.getElementById('modelSelect');
+                select.innerHTML = availableModels.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+                document.getElementById('modelsResults').innerHTML = `<div class="stats-grid">` + 
+                    availableModels.map(m => `<div class="model-card"><h4>${m.id}</h4><p>${m.owned_by}</p></div>`).join('') + `</div>`;
+            } catch (error) { console.error(error); }
         }
 
         function toggleChat() {
-            const chatContainer = document.getElementById('chatContainer');
-            chatContainer.classList.toggle('active');
-            if (chatContainer.classList.contains('active')) {
-                document.getElementById('chatInput').focus();
-            }
+            const chat = document.getElementById('chatContainer');
+            chat.style.display = chat.style.display === 'none' ? 'block' : 'none';
         }
 
-        function clearChat() {
-            if (confirm('Are you sure you want to clear the chat history?')) {
-                conversationHistory = [];
-                localStorage.removeItem('chatHistory');
-                renderMessages();
-            }
-        }
+        function clearChat() { conversationHistory = []; renderMessages(); }
 
         function renderMessages() {
-            const chatMessages = document.getElementById('chatMessages');
-
-            if (conversationHistory.length === 0) {
-                chatMessages.innerHTML = `
-                    <div style="text-align: center; color: #999; margin-top: 200px;">
-                        Start a conversation by typing a message below
-                    </div>
-                `;
-                return;
-            }
-
-            chatMessages.innerHTML = conversationHistory.map(msg => `
-                <div class="message">
-                    <div class="message-avatar ${msg.role}-avatar">
-                        ${msg.role === 'user' ? '👤' : '🤖'}
-                    </div>
-                    <div class="message-content">
-                        <div class="message-role">${msg.role === 'user' ? 'You' : 'Assistant'}</div>
-                        <div class="message-text">${escapeHtml(msg.content)}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function handleKeyPress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
-            }
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = conversationHistory.map(msg => `
+                <div style="margin-bottom:15px;">
+                    <strong>${msg.role.toUpperCase()}:</strong>
+                    <div class="message-content">${msg.content}</div>
+                </div>`).join('');
+            container.scrollTop = container.scrollHeight;
         }
 
         async function sendMessage() {
             const baseUrl = getProxyUrl();
-            if (!baseUrl) return;
+            const model = document.getElementById('modelSelect').value;
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if(!model || !msg) return;
 
-            const modelSelect = document.getElementById('modelSelect');
-            const chatInput = document.getElementById('chatInput');
-            const sendBtn = document.getElementById('sendBtn');
-
-            const model = modelSelect.value;
-            const message = chatInput.value.trim();
-
-            if (!model) {
-                alert('Please select a model first');
-                return;
-            }
-
-            if (!message) {
-                alert('Please enter a message');
-                return;
-            }
-
-            conversationHistory.push({
-                role: 'user',
-                content: message
-            });
-
-            chatInput.value = '';
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = '<span class="loading"></span> Sending...';
-
+            conversationHistory.push({ role: 'user', content: msg });
+            input.value = '';
             renderMessages();
 
             try {
-                const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+                const res = await fetch(`${baseUrl}/v1/chat/completions`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: model,
-                        messages: conversationHistory,
-                        temperature: 0.7,
-                        max_tokens: 1000
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: model, messages: conversationHistory })
                 });
-
-                const data = await response.json();
-
-                if (response.ok && data.choices && data.choices[0]) {
-                    const assistantMessage = data.choices[0].message.content;
-                    conversationHistory.push({
-                        role: 'assistant',
-                        content: assistantMessage
-                    });
-
-                    localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
-                    renderMessages();
-
-                    // Trigger a dashboard sync after a successful message to see token update
-                    setTimeout(loadDashboard, 1500); 
-                } else {
-                    throw new Error(data.error?.message || 'Unknown error occurred');
-                }
-            } catch (error) {
-                conversationHistory.push({
-                    role: 'assistant',
-                    content: `❌ Error: ${error.message}\n\nPlease check your proxy configuration and try again.`
-                });
+                const data = await res.json();
+                conversationHistory.push(data.choices[0].message);
                 renderMessages();
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = 'Send 📤';
-                chatInput.focus();
-            }
-        }
-
-        function copyModelName(modelName) {
-            navigator.clipboard.writeText(modelName).then(() => {
-                const originalButton = event.target;
-                const originalText = originalButton.innerHTML;
-                originalButton.innerHTML = '✅ Copied!';
-                originalButton.style.background = 'rgba(72, 187, 120, 0.3)';
-
-                setTimeout(() => {
-                    originalButton.innerHTML = originalText;
-                    originalButton.style.background = 'rgba(255,255,255,0.2)';
-                }, 2000);
-            }).catch(err => {
-                alert('Failed to copy: ' + err);
-            });
-        }
-
-        function openHealthPage() {
-            const baseUrl = getProxyUrl();
-            if (!baseUrl) return;
-            window.open(`${baseUrl}/health`, '_blank');
-        }
-
-        function openModelsPage() {
-            const baseUrl = getProxyUrl();
-            if (!baseUrl) return;
-            window.open(`${baseUrl}/v1/models`, '_blank');
-        }
-
-        function showError(message) {
-            alert(message);
+                setTimeout(loadDashboard, 1000);
+            } catch (err) { console.error(err); }
         }
     </script>
 </body>

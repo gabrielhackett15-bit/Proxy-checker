@@ -3,139 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NIM Elite Console - 2026</title>
+    <title>NIM Elite - 675B Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root { --bg: #0b0f1a; --card: #161e2e; --text: #f1f5f9; --accent: #38bdf8; --green: #4ade80; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
-        .section { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #2d3748; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 10px; }
+        .section { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #2d3748; }
         
-        /* GAUGE */
-        .gauge-wrap { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
-        .bar { flex-grow: 1; height: 10px; background: #1f2937; border-radius: 5px; overflow: hidden; }
-        #needle { height: 100%; width: 0%; background: var(--accent); transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .ms-val { font-family: monospace; color: var(--accent); font-weight: bold; min-width: 80px; font-size: 1.1em; }
+        /* GAUGE & STATS */
+        .gauge-wrap { display: flex; align-items: center; gap: 10px; }
+        .bar { flex-grow: 1; height: 8px; background: #1f2937; border-radius: 4px; overflow: hidden; }
+        #needle { height: 100%; width: 0%; background: var(--accent); transition: 0.3s ease; }
+        .ms-val { font-family: monospace; color: var(--accent); font-weight: bold; font-size: 1em; }
 
-        /* CHAT */
-        #chat-ui.full { position: fixed; top:0; left:0; width:100vw; height:100vh; z-index:1000; border-radius:0; }
-        .msgs { height: 400px; overflow-y: auto; padding: 20px; background: #0b0f1a; border-radius: 8px; margin: 15px 0; border: 1px solid #2d3748; }
-        #chat-ui.full .msgs { height: calc(100vh - 180px); }
-        .msg { margin-bottom: 15px; line-height: 1.6; position: relative; padding-top: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 15px; white-space: pre-wrap; }
-        .tag { position: absolute; top: 0; right: 0; font-size: 0.75em; color: var(--green); font-weight: bold; }
+        /* CHAT BOX */
+        .msgs { height: 450px; overflow-y: auto; padding: 15px; background: #0b0f1a; border-radius: 8px; border: 1px solid #2d3748; margin: 10px 0; }
+        .msg { margin-bottom: 20px; line-height: 1.6; position: relative; padding-top: 15px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
+        .tag { position: absolute; top: 0; right: 0; font-size: 0.7em; color: var(--green); font-weight: bold; }
 
-        /* INPUTS */
-        button { background: var(--accent); color: #0b0f1a; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.95); }
-        input, select, textarea { width: 100%; background: #0b0f1a; border: 1px solid #2d3748; color: white; padding: 12px; border-radius: 6px; margin-top: 5px; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--accent); }
+        /* MARKDOWN SPECIFIC */
+        .msg-content code { background: #1e293b; color: #f87171; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+        .msg-content pre { background: #000; padding: 12px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid #334155; position: relative; }
+        .msg-content pre code { background: none; color: #fff; padding: 0; }
+        .msg-content h3 { color: var(--accent); margin-top: 10px; }
+        .msg-content blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: #94a3b8; font-style: italic; }
 
-        /* MODEL GRID */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 15px; }
-        .m-card { background: #1e293b; border: 1px solid #334155; padding: 12px; border-radius: 8px; font-size: 0.75em; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-        .m-card:hover { border-color: var(--accent); background: #2d3748; }
-        .size-badge { font-weight: 900; color: var(--accent); display: block; margin-bottom: 4px; font-size: 1.1em; }
+        /* BUTTONS */
+        button { background: var(--accent); color: #0b0f1a; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        textarea { width: 100%; background: #0b0f1a; border: 1px solid #2d3748; color: white; padding: 12px; border-radius: 6px; font-size: 16px; height: 55px; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+        .m-card { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: 8px; font-size: 0.7em; text-align: center; cursor: pointer; }
+        .size-badge { font-weight: 800; color: var(--accent); display: block; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
 <div class="section">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3 style="color:var(--accent)">🚀 Performance Pulse</h3>
-        <div id="status" style="color:var(--green); font-size:0.7em;">EDGE ACTIVE</div>
-    </div>
     <div class="gauge-wrap">
         <div class="ms-val" id="ms-text">0 ms</div>
         <div class="bar"><div id="needle"></div></div>
+        <button onclick="document.documentElement.classList.toggle('dark-mode')" style="padding:2px 8px;">🌓</button>
     </div>
 </div>
 
 <div class="section" id="chat-ui">
-    <div style="display:flex; gap:10px; align-items:center;">
-        <select id="mod-select" style="font-weight: bold;"></select>
-        <button onclick="document.getElementById('chat-ui').classList.toggle('full')">MAX</button>
-    </div>
+    <select id="mod-select" style="width:100%; background:#0b0f1a; color:white; padding:8px; border-radius:6px; margin-bottom:10px;"></select>
     <div class="msgs" id="chat-box"></div>
-    <div style="display:flex; gap:10px;">
+    <div style="display:flex; gap:8px;">
         <textarea id="user-input" placeholder="Enter prompt..."></textarea>
-        <button onclick="send()" style="height:62px; margin-top:5px;">SEND</button>
+        <button onclick="send()">SEND</button>
     </div>
 </div>
 
 <div class="section">
-    <input type="text" id="api-url" placeholder="Your Vercel/Proxy URL">
-    <div style="display:flex; gap:10px; margin-top:10px;">
+    <input type="text" id="api-url" placeholder="Proxy URL" style="margin-bottom:8px;">
+    <div style="display:flex; gap:8px;">
         <button onclick="getModels()">🤖 Load NIMs</button>
-        <button onclick="stressTest()" style="background:#f87171;">🔥 Stress Test</button>
+        <button onclick="stressTest()" style="background:#f87171;">🔥 Stress</button>
     </div>
     <div id="model-grid" class="grid"></div>
 </div>
 
 <script>
     let logs = [];
-    const getBase = () => { 
-        let u = document.getElementById('api-url').value.replace(/\/$/, ''); 
-        localStorage.setItem('nim_proxy', u); 
-        return u; 
-    };
+    const getBase = () => { let u = document.getElementById('api-url').value.replace(/\/$/, ''); localStorage.setItem('nim_v4', u); return u; };
+    window.onload = () => { let saved = localStorage.getItem('nim_v4'); if(saved) { document.getElementById('api-url').value = saved; getModels(); } };
 
-    window.onload = () => { 
-        let saved = localStorage.getItem('nim_proxy'); 
-        if(saved) { document.getElementById('api-url').value = saved; getModels(); }
-    };
-
-    // SMART SORT: Finds 675B, 405B, 340B, etc. and ranks Largest -> Smallest
     async function getModels() {
         try {
             const r = await fetch(`${getBase()}/v1/models`);
             const d = await r.json();
-            
             const parseB = (id) => {
-                const m = id.match(/(\d+(\.\d+)?)[bm]/i);
-                if (!m) return 0;
-                let val = parseFloat(m[1]);
-                return id.toLowerCase().includes('b') ? val : val / 1000;
+                const match = id.match(/(\d+(\.\d+)?)[bm]/i);
+                if (!match) return 0;
+                return id.toLowerCase().includes('b') ? parseFloat(match[1]) : parseFloat(match[1]) / 1000;
             };
-
             const sorted = d.data.sort((a, b) => parseB(b.id) - parseB(a.id));
-            const select = document.getElementById('mod-select');
-            const grid = document.getElementById('model-grid');
-
-            select.innerHTML = sorted.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
-            grid.innerHTML = sorted.map(m => {
-                const match = m.id.match(/(\d+[bm])/i);
-                const sizeLabel = match ? match[0].toUpperCase() : '---';
-                const name = m.id.split('/').pop().replace(/-instruct|-it/g, '');
-                return `
-                    <div class="m-card" onclick="document.getElementById('mod-select').value='${m.id}'">
-                        <span class="size-badge">${sizeLabel}</span>
-                        ${name}
-                    </div>`;
+            document.getElementById('mod-select').innerHTML = sorted.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+            document.getElementById('model-grid').innerHTML = sorted.map(m => {
+                const size = m.id.match(/(\d+[bm])/i);
+                return `<div class="m-card" onclick="document.getElementById('mod-select').value='${m.id}'">
+                    <span class="size-badge">${size ? size[0].toUpperCase() : '---'}</span>
+                    ${m.id.split('/').pop().replace(/-instruct|-it/g, '')}
+                </div>`;
             }).join('');
-        } catch(e) { alert("Check Proxy Connection."); }
+        } catch(e) { console.log("Fetch failed"); }
     }
 
     function setGauge(ms) {
         document.getElementById('ms-text').innerText = ms + " ms";
-        let width = Math.max(5, Math.min(100, 100 - (ms / 12)));
+        let width = Math.max(5, Math.min(100, 100 - (ms / 15)));
         document.getElementById('needle').style.width = width + "%";
-        document.getElementById('needle').style.background = ms < 150 ? '#4ade80' : '#38bdf8';
     }
 
     async function send() {
         const b = getBase(); const m = document.getElementById('mod-select').value; const i = document.getElementById('user-input');
         if(!i.value || !m) return;
-
         logs.push({role:'user', content: i.value});
         let ai = {role:'assistant', content: '', lat: 0};
         logs.push(ai); i.value = ''; render();
-
         const t0 = Date.now();
         try {
             const res = await fetch(`${b}/v1/chat/completions`, {
                 method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ model: m, messages: logs.slice(0,-1), stream: true, max_tokens: 1500 })
+                body: JSON.stringify({ model: m, messages: logs.slice(0,-1), stream: true, max_tokens: 2000 })
             });
-
             const reader = res.body.getReader();
             const decoder = new TextDecoder();
             while (true) {
@@ -156,37 +130,35 @@
                     }
                 }
             }
-        } catch(e) { ai.content += "\n[STREAM ERROR]"; render(); }
+        } catch(e) { ai.content += "\n[Error]"; render(); }
     }
 
     async function stressTest() {
         const b = getBase(); const m = document.getElementById('mod-select').value;
-        if(!m) return;
-        logs.push({role:'system', content: `🔥 BURSTING 5 REQUESTS TO ${m}...`}); render();
-        
-        const start = Date.now();
-        try {
-            await Promise.all(Array.from({length:5}).map(() => 
-                fetch(`${b}/v1/chat/completions`, {
-                    method:'POST', headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({model:m, messages:[{role:'user', content:'ping'}], max_tokens:10})
-                }).then(r => r.json())
-            ));
-            const total = Date.now() - start;
-            const avg = Math.round(total / 5);
-            logs.push({role:'system', content: `✅ STATS: Avg ${avg}ms per request | Total ${total}ms`});
-            setGauge(avg);
-        } catch(e) { logs.push({role:'system', content: `❌ BURST FAILED.`}); }
-        render();
+        logs.push({role:'system', content: `🔥 BURST: Testing ${m}`}); render();
+        const s = Date.now();
+        await Promise.all(Array.from({length:5}).map(() => 
+            fetch(`${b}/v1/chat/completions`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({model:m, messages:[{role:'user', content:'hi'}], max_tokens:10})
+            })
+        ));
+        const avg = Math.round((Date.now() - s) / 5);
+        logs.push({role:'system', content: `✅ AVG LATENCY: ${avg}ms`});
+        setGauge(avg); render();
     }
 
     function render() {
         const box = document.getElementById('chat-box');
-        box.innerHTML = logs.map(l => `
+        box.innerHTML = logs.map(l => {
+            const content = l.role === 'system' ? l.content : marked.parse(l.content);
+            return `
             <div class="msg">
                 <span class="tag">${l.lat ? l.lat+'ms' : ''}</span>
-                <b style="color:var(--accent)">${l.role.toUpperCase()}</b><br>${l.content}
-            </div>`).join('');
+                <b style="color:var(--accent)">${l.role.toUpperCase()}</b>
+                <div class="msg-content">${content}</div>
+            </div>`;
+        }).join('');
         box.scrollTop = box.scrollHeight;
     }
 </script>

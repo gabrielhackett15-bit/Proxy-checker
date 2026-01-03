@@ -4,50 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>NVIDIA NIM Proxy Dashboard</title>
+    <title>NVIDIA NIM Ultimate Console</title>
     <style>
         :root {
             --bg-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --card-bg: white;
-            --text-primary: #333;
-            --text-secondary: #666;
-            --input-border: #e0e0e0;
-            --stat-card-bg: #f7fafc;
-            --chat-bg: #f9fafb;
+            --text-p: #333;
+            --text-s: #666;
+            --border: #e0e0e0;
             --shadow: rgba(0,0,0,0.1);
         }
-
         html.dark-mode {
             --bg-color: #1a202c;
             --card-bg: #2d3748;
-            --text-primary: #f7fafc;
-            --text-secondary: #cbd5e0;
-            --input-border: #4a5568;
-            --stat-card-bg: #1a202c;
-            --chat-bg: #1a202c;
+            --text-p: #f7fafc;
+            --text-s: #cbd5e0;
+            --border: #4a5568;
             --shadow: rgba(0,0,0,0.3);
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); min-height: 100vh; padding: 15px; color: var(--text-primary); transition: 0.3s; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); min-height: 100vh; padding: 15px; color: var(--text-p); transition: 0.3s; }
         .container { max-width: 1000px; margin: 0 auto; }
 
-        .header {
-            background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 20px;
-            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px var(--shadow);
-        }
+        .section { background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px var(--shadow); }
+        .header { display: flex; justify-content: space-between; align-items: center; }
         .header h1 { color: #667eea; font-size: 1.5em; }
 
-        .dashboard-section, .config-section, .chat-container {
-            background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 10px 30px var(--shadow);
-        }
-
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .stat-card { background: var(--stat-card-bg); padding: 15px; border-radius: 10px; border-top: 3px solid #667eea; text-align: center; }
-        .stat-card h4 { font-size: 0.7em; text-transform: uppercase; color: var(--text-secondary); }
+        .stat-card { background: rgba(102, 126, 234, 0.1); padding: 15px; border-radius: 10px; border-top: 3px solid #667eea; text-align: center; }
         .stat-card .value { font-size: 1.1em; font-weight: 700; }
 
-        .chart-container { height: 200px; width: 100%; }
+        .chart-container { height: 180px; width: 100%; }
 
         .button-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px; }
         button { padding: 10px 15px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9em; }
@@ -55,47 +42,50 @@
         .btn-s { background: #48bb78; color: white; }
         .btn-d { background: #f56565; color: white; }
 
-        .chat-messages {
-            height: 400px; overflow-y: auto; border: 1px solid var(--input-border);
-            border-radius: 10px; padding: 15px; background: var(--chat-bg); margin: 15px 0;
-        }
-        .message { margin-bottom: 12px; padding: 10px; border-radius: 8px; background: var(--card-bg); box-shadow: 0 2px 5px var(--shadow); white-space: pre-wrap; }
+        .model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 15px; }
+        .model-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px; border-radius: 8px; font-size: 0.8em; cursor: pointer; }
+
+        .chat-messages { height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 15px; background: rgba(0,0,0,0.05); margin: 15px 0; }
+        .message { margin-bottom: 12px; padding: 12px; border-radius: 8px; background: var(--card-bg); position: relative; }
+        .latency-tag { font-size: 0.7em; color: #48bb78; font-weight: bold; position: absolute; top: 5px; right: 10px; }
         
-        textarea { width: 100%; padding: 12px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); min-height: 50px; }
-        input { width: 100%; padding: 10px; border: 1px solid var(--input-border); border-radius: 8px; background: var(--card-bg); color: var(--text-primary); margin-top: 5px; }
+        textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-p); }
+        input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card-bg); color: var(--text-p); margin-top: 5px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="header">
-        <h1>🚀 Proxy Console</h1>
-        <button onclick="toggleDarkMode()" style="background:none; font-size: 1.2em; border:none; cursor:pointer;">🌓</button>
+    <div class="section header">
+        <h1>🚀 Ultimate Proxy</h1>
+        <button onclick="toggleDarkMode()" style="background:none; border:none; cursor:pointer; font-size: 1.2em;">🌓</button>
     </div>
 
-    <div class="dashboard-section">
+    <div class="section">
         <div class="stats-grid">
             <div class="stat-card"><h4>Tokens</h4><div class="value" id="tok">---</div></div>
             <div class="stat-card"><h4>Cost</h4><div class="value" id="cst">$0.00</div></div>
-            <div class="stat-card"><h4>Reqs</h4><div class="value" id="req">---</div></div>
+            <div class="stat-card"><h4>Health</h4><div class="value" id="hp">???</div></div>
         </div>
         <div class="chart-container"><canvas id="usageChart"></canvas></div>
     </div>
 
-    <div class="config-section">
-        <label>Proxy URL</label>
+    <div class="section">
+        <label>Proxy Endpoint</label>
         <input type="text" id="url" placeholder="https://your-proxy.workers.dev">
         <div class="button-group">
             <button class="btn-s" onclick="fetchModels()">🤖 Load Models</button>
-            <button class="btn-p" onclick="loadDashboard()">🔄 Sync Stats</button>
+            <button class="btn-p" onclick="checkHealth()">🏥 Health Check</button>
+            <button class="btn-p" onclick="loadDashboard()">🔄 Sync</button>
             <button class="btn-d" onclick="runStressTest()">🔥 Stress Test</button>
         </div>
+        <div id="modelGrid" class="model-grid"></div>
     </div>
 
-    <div class="chat-container">
-        <select id="mod" style="width:100%; padding:10px; border-radius:8px; margin-bottom:10px;"></select>
+    <div class="section">
+        <select id="mod" style="width:100%; padding:10px; border-radius:8px; margin-bottom:10px; background: var(--card-bg); color: var(--text-p);"></select>
         <div class="chat-messages" id="msgs"></div>
         <div style="display:flex; gap:10px;">
-            <textarea id="in" placeholder="Say something..."></textarea>
+            <textarea id="in" placeholder="Ask anything..."></textarea>
             <button class="btn-p" onclick="send()">Send</button>
         </div>
     </div>
@@ -107,8 +97,17 @@
     function getUrl() { const u = document.getElementById('url').value.replace(/\/$/, ''); localStorage.setItem('pUrl', u); return u; }
     
     window.onload = () => { 
-        const u = localStorage.getItem('pUrl'); if(u) { document.getElementById('url').value = u; loadDashboard(); }
+        const u = localStorage.getItem('pUrl'); if(u) { document.getElementById('url').value = u; loadDashboard(); checkHealth(); }
     };
+
+    async function checkHealth() {
+        const b = getUrl();
+        try {
+            const r = await fetch(`${b}/health`);
+            const d = await r.json();
+            document.getElementById('hp').innerText = d.status === 'ok' ? 'ONLINE' : 'ERROR';
+        } catch(e) { document.getElementById('hp').innerText = 'OFFLINE'; }
+    }
 
     async function loadDashboard() {
         const b = getUrl(); if(!b) return;
@@ -117,15 +116,14 @@
             const h = await (await fetch(`${b}/usage/history`)).json();
             document.getElementById('tok').innerText = (g.total || 0).toLocaleString();
             document.getElementById('cst').innerText = `$${((g.total/1000000)*5).toFixed(3)}`;
-            document.getElementById('req').innerText = h.length;
 
             const ctx = document.getElementById('usageChart').getContext('2d');
             if(chart) chart.destroy();
             chart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: h.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})),
-                    datasets: [{ label:'Tokens', data: h.map(d => d.tokens_used), borderColor:'#667eea', tension:0.4 }]
+                    labels: h.slice(-10).map(d => new Date(d.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})),
+                    datasets: [{ label:'Tokens', data: h.slice(-10).map(d => d.tokens_used), borderColor:'#667eea', tension:0.4, fill: true, backgroundColor: 'rgba(102, 126, 234, 0.1)' }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
@@ -134,39 +132,57 @@
 
     async function fetchModels() {
         const b = getUrl();
-        const d = await (await fetch(`${b}/v1/models`)).json();
-        document.getElementById('mod').innerHTML = d.data.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+        try {
+            const d = await (await fetch(`${b}/v1/models`)).json();
+            const select = document.getElementById('mod');
+            const grid = document.getElementById('modelGrid');
+            select.innerHTML = d.data.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+            grid.innerHTML = d.data.map(m => `<div class="model-card" onclick="document.getElementById('mod').value='${m.id}'">${m.id}</div>`).join('');
+        } catch(e) { alert("Load Failed"); }
     }
 
     async function send() {
         const b = getUrl(); const m = document.getElementById('mod').value; const i = document.getElementById('in');
         if(!m || !i.value) return;
         history.push({role:'user', content: i.value}); i.value=''; render();
-        const r = await fetch(`${b}/v1/chat/completions`, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({model:m, messages: history})
-        });
-        const data = await r.json();
-        history.push(data.choices[0].message); render(); loadDashboard();
+        
+        const start = Date.now();
+        try {
+            const r = await fetch(`${b}/v1/chat/completions`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({model:m, messages: history})
+            });
+            const data = await r.json();
+            const lat = Date.now() - start;
+            const reply = data.choices[0].message;
+            reply.latency = lat; // Attach latency to the message object
+            history.push(reply); 
+            render(); loadDashboard();
+        } catch(e) { alert("Chat Error"); }
     }
 
     async function runStressTest() {
-        const b = getUrl(); const m = document.getElementById('mod').value; if(!m) return alert("Select model!");
-        history.push({role:'assistant', content:`🔥 SYSTEM: Firing 5 parallel hits to ${m}...`}); render();
+        const b = getUrl(); const m = document.getElementById('mod').value; if(!m) return alert("Pick a model!");
+        history.push({role:'assistant', content:`🔥 INITIATING BURST: 5 concurrent hits to ${m}...`}); render();
         const start = Date.now();
         const reqs = Array.from({length:5}).map(() => fetch(`${b}/v1/chat/completions`, {
             method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({model:m, messages:[{role:'user', content:'test'}], max_tokens:5})
+            body: JSON.stringify({model:m, messages:[{role:'user', content:'hi'}], max_tokens:5})
         }));
         try {
             await Promise.all(reqs);
-            history.push({role:'assistant', content:`✅ DONE: All hits landed in ${((Date.now()-start)/1000).toFixed(2)}s`});
-        } catch(e) { history.push({role:'assistant', content:`❌ FAILED: Stress test crashed.`}); }
+            const dur = Date.now() - start;
+            history.push({role:'assistant', content:`✅ BURST COMPLETE: Total time ${dur}ms (Avg ${dur/5}ms per req)`});
+        } catch(e) { history.push({role:'assistant', content:`❌ SYSTEM OVERLOAD: Proxy rejected the burst.`}); }
         render(); loadDashboard();
     }
 
     function render() {
-        document.getElementById('msgs').innerHTML = history.map(h => `<div class="message"><b>${h.role}:</b> ${h.content}</div>`).join('');
+        document.getElementById('msgs').innerHTML = history.map(h => `
+            <div class="message">
+                ${h.latency ? `<span class="latency-tag">${h.latency}ms</span>` : ''}
+                <b>${h.role}:</b> ${h.content}
+            </div>`).join('');
         document.getElementById('msgs').scrollTop = 99999;
     }
 </script>

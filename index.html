@@ -4,196 +4,157 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <title>NIM Streaming Console</title>
+    <title>NIM Speed King Console</title>
     <style>
         :root {
-            --bg-color: #f0f2f5; --card-bg: white; --text-p: #1c1e21; --border: #ddd;
-            --primary: #667eea; --shadow: rgba(0,0,0,0.1);
+            --bg: #f4f7f6; --card: white; --text: #2c3e50; --primary: #667eea;
         }
         html.dark-mode {
-            --bg-color: #1a202c; --card-bg: #2d3748; --text-p: #f7fafc; --border: #4a5568;
-            --shadow: rgba(0,0,0,0.3);
+            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --primary: #bb86fc;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-p); transition: 0.3s; padding: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 10px; transition: 0.3s; }
         
-        /* Layout Sections */
-        .section { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px var(--shadow); }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
-        .stat-card { background: rgba(102, 126, 234, 0.1); padding: 10px; border-radius: 8px; text-align: center; border-top: 3px solid var(--primary); }
-        .value { font-weight: 700; font-size: 0.9em; }
-
-        /* Chat UI - Priority #1 */
-        #chat-section { display: flex; flex-direction: column; transition: 0.3s; }
-        #chat-section.full-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; margin: 0; border-radius: 0; }
+        .section { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        .chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .chat-window { flex-grow: 1; height: 400px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: rgba(0,0,0,0.03); margin-bottom: 10px; }
-        #chat-section.full-screen .chat-window { height: calc(100vh - 150px); }
+        /* THE SPEEDOMETER */
+        .gauge-container { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .gauge-bar { flex-grow: 1; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; position: relative; }
+        #speed-needle { height: 100%; width: 0%; background: linear-gradient(90deg, #48bb78, #f6e05e, #f56565); transition: width 0.5s ease; }
+        .speed-label { font-weight: bold; font-size: 0.8em; min-width: 60px; }
 
-        .message { margin-bottom: 10px; padding: 10px; border-radius: 8px; background: var(--card-bg); position: relative; line-height: 1.4; border: 1px solid var(--border); word-wrap: break-word; }
-        .latency-tag { font-size: 0.7em; color: #48bb78; font-weight: bold; position: absolute; top: 4px; right: 8px; }
+        /* CHAT BOX */
+        #chat-ui.full { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 100; border-radius: 0; }
+        .msgs { height: 350px; overflow-y: auto; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; padding: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.02); }
+        #chat-ui.full .msgs { height: calc(100vh - 160px); }
+        
+        .msg { margin-bottom: 10px; padding: 10px; border-radius: 8px; background: var(--card); border: 1px solid rgba(0,0,0,0.05); position: relative; }
+        .lat { position: absolute; top: 2px; right: 8px; font-size: 0.65em; color: #48bb78; }
 
-        /* Controls */
-        .input-area { display: flex; gap: 8px; }
-        textarea { flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-p); height: 50px; resize: none; }
-        button { padding: 8px 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: var(--primary); color: white; font-size: 0.8em; }
-        .btn-d { background: #f56565; }
-
-        /* Models Below Chat */
-        .model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 10px; }
-        .model-card { background: var(--primary); color: white; padding: 8px; border-radius: 6px; font-size: 0.75em; text-align: center; cursor: pointer; }
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        button { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; background: var(--primary); color: white; font-weight: bold; font-size: 0.8em; }
+        textarea { width: 100%; height: 50px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px; background: var(--card); color: var(--text); }
+        
+        .model-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 5px; margin-top: 10px; }
+        .m-card { padding: 8px; background: var(--primary); color: white; border-radius: 4px; font-size: 0.7em; cursor: pointer; text-align: center; opacity: 0.8; }
+        .m-card:hover { opacity: 1; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="section">
-        <div class="stats-grid">
-            <div class="stat-card"><div>Tokens</div><div class="value" id="tok">---</div></div>
-            <div class="stat-card"><div>Health</div><div class="value" id="hp">...</div></div>
-            <div class="stat-card"><button onclick="toggleDarkMode()" style="padding:2px 5px; width:100%">🌓 Mode</button></div>
-        </div>
-        <div style="height: 120px;"><canvas id="usageChart"></canvas></div>
+<div class="section">
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <h3>⚡ NIM Speedometer</h3>
+        <button onclick="document.documentElement.classList.toggle('dark-mode')">🌓</button>
     </div>
-
-    <div class="section" id="chat-section">
-        <div class="chat-header">
-            <select id="mod" style="padding:5px; border-radius:5px; max-width: 60%;"></select>
-            <button onclick="toggleFullScreen()">🔳 Full Screen</button>
-        </div>
-        <div class="chat-window" id="msgs"></div>
-        <div class="input-area">
-            <textarea id="in" placeholder="Ask..."></textarea>
-            <button onclick="send()">Send</button>
-        </div>
-    </div>
-
-    <div class="section">
-        <input type="text" id="url" placeholder="Proxy URL" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
-        <div class="button-group" style="display:flex; gap:5px;">
-            <button onclick="fetchModels()">🤖 Load Models</button>
-            <button onclick="checkHealth()">🏥 Health</button>
-            <button class="btn-d" onclick="runStressTest()">🔥 Stress</button>
-        </div>
-        <div id="modelGrid" class="model-grid"></div>
+    <div class="gauge-container">
+        <div class="speed-label" id="speed-val">0 ms</div>
+        <div class="gauge-bar"><div id="speed-needle"></div></div>
+        <div class="speed-label" style="text-align:right">LOW LATENCY</div>
     </div>
 </div>
 
+<div class="section" id="chat-ui">
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <select id="mod-select" style="padding:4px; border-radius:4px; width:60%;"></select>
+        <button onclick="document.getElementById('chat-ui').classList.toggle('full')">🔳 Full</button>
+    </div>
+    <div class="msgs" id="chat-box"></div>
+    <div style="display:flex; gap:10px;">
+        <textarea id="user-in" placeholder="Type message..."></textarea>
+        <button onclick="sendMsg()" style="height:50px; margin-top:10px;">SEND</button>
+    </div>
+</div>
+
+<div class="section">
+    <input type="text" id="proxy-url" placeholder="Proxy URL" style="width:100%; padding:8px; margin-bottom:10px; border-radius:4px; border:1px solid #ccc;">
+    <div class="btn-group">
+        <button onclick="fetchModels()">🤖 Load Models</button>
+        <button onclick="runStress()">🔥 Stress Test</button>
+    </div>
+    <div id="grid" class="model-list"></div>
+</div>
+
 <script>
-    let history = []; let chart = null;
-    function toggleDarkMode() { document.documentElement.classList.toggle('dark-mode'); }
-    function toggleFullScreen() { document.getElementById('chat-section').classList.toggle('full-screen'); }
-    function getUrl() { const u = document.getElementById('url').value.replace(/\/$/, ''); localStorage.setItem('pUrl', u); return u; }
-    
+    let chatHistory = [];
+    const getB = () => { const u = document.getElementById('proxy-url').value.replace(/\/$/, ''); localStorage.setItem('pU', u); return u; };
+
     window.onload = () => { 
-        const u = localStorage.getItem('pUrl'); 
-        if(u) { document.getElementById('url').value = u; checkHealth(); loadDashboard(); }
+        const u = localStorage.getItem('pU'); 
+        if(u) { document.getElementById('proxy-url').value = u; fetchModels(); }
     };
 
-    async function checkHealth() {
-        try {
-            const r = await fetch(`${getUrl()}/health`);
-            const d = await r.json();
-            document.getElementById('hp').innerText = d.status === 'ok' ? 'ONLINE' : 'ERR';
-        } catch(e) { document.getElementById('hp').innerText = 'OFF'; }
-    }
-
-    async function loadDashboard() {
-        try {
-            const b = getUrl();
-            const g = await (await fetch(`${b}/usage/global`)).json();
-            const h = await (await fetch(`${b}/usage/history`)).json();
-            document.getElementById('tok').innerText = (g.total || 0).toLocaleString();
-            if(chart) chart.destroy();
-            chart = new Chart(document.getElementById('usageChart').getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: h.slice(-10).map(d => ''),
-                    datasets: [{ label:'Tokens', data: h.slice(-10).map(d => d.tokens_used), borderColor:'#667eea', tension:0.4, fill:true }]
-                },
-                options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
-            });
-        } catch(e) {}
-    }
-
     async function fetchModels() {
-        try {
-            const d = await (await fetch(`${getUrl()}/v1/models`)).json();
-            document.getElementById('mod').innerHTML = d.data.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
-            document.getElementById('modelGrid').innerHTML = d.data.map(m => `<div class="model-card" onclick="document.getElementById('mod').value='${m.id}'">${m.id}</div>`).join('');
-        } catch(e) { alert("Fail"); }
+        const r = await fetch(`${getB()}/v1/models`);
+        const d = await r.json();
+        document.getElementById('mod-select').innerHTML = d.data.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+        document.getElementById('grid').innerHTML = d.data.map(m => `<div class="m-card" onclick="document.getElementById('mod-select').value='${m.id}'">${m.id}</div>`).join('');
     }
 
-    async function send() {
-        const b = getUrl(); const m = document.getElementById('mod').value; const i = document.getElementById('in');
-        if(!m || !i.value) return;
-        
-        const userText = i.value;
-        history.push({role:'user', content: userText});
+    function updateGauge(ms) {
+        document.getElementById('speed-val').innerText = ms + " ms";
+        // 0ms = 100% width (green), 2000ms = 0% width (red)
+        let percent = Math.max(0, 100 - (ms / 15)); 
+        document.getElementById('speed-needle').style.width = percent + "%";
+    }
+
+    async function sendMsg() {
+        const b = getB(); const m = document.getElementById('mod-select').value; const i = document.getElementById('user-in');
+        if(!i.value) return;
+
+        chatHistory.push({role:'user', content: i.value});
         i.value = '';
-        
-        // Prepare AI bubble for streaming
-        const aiMsgObj = {role:'assistant', content: '', latency: 0};
-        history.push(aiMsgObj);
+        let aiMsg = {role:'assistant', content: '', latency: 0};
+        chatHistory.push(aiMsg);
         render();
 
         const start = Date.now();
-        try {
-            const response = await fetch(`${b}/v1/chat/completions`, {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({model:m, messages: history.slice(0, -1), stream: true})
-            });
+        const res = await fetch(`${b}/v1/chat/completions`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({model:m, messages: chatHistory.slice(0,-1), stream: true})
+        });
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-                
-                for (const line of lines) {
-                    if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                        try {
-                            const json = JSON.parse(line.substring(6));
-                            const content = json.choices[0].delta.content;
-                            if (content) {
-                                aiMsgObj.content += content;
-                                if (!aiMsgObj.latency) aiMsgObj.latency = Date.now() - start;
-                                render();
-                            }
-                        } catch (e) {}
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+            const {done, value} = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            for (const l of lines) {
+                if (l.startsWith('data: ') && l !== 'data: [DONE]') {
+                    const j = JSON.parse(l.substring(6));
+                    const txt = j.choices[0].delta.content;
+                    if (txt) {
+                        if (!aiMsg.latency) {
+                            aiMsg.latency = Date.now() - start;
+                            updateGauge(aiMsg.latency);
+                        }
+                        aiMsg.content += txt;
+                        render();
                     }
                 }
             }
-            loadDashboard();
-        } catch(e) { aiMsgObj.content = "Error connection to proxy."; render(); }
+        }
     }
 
-    async function runStressTest() {
-        const b = getUrl(); const m = document.getElementById('mod').value;
-        history.push({role:'assistant', content:`🔥 Stress Test: 5 Hits...`}); render();
-        const start = Date.now();
-        const reqs = Array.from({length:5}).map(() => fetch(`${b}/v1/chat/completions`, {
+    async function runStress() {
+        const b = getB(); const m = document.getElementById('mod-select').value;
+        chatHistory.push({role:'assistant', content:'🔥 STRESS TEST: Firing 5 concurrent hits...'});
+        render();
+        const s = Date.now();
+        await Promise.all(Array.from({length:5}).map(() => fetch(`${b}/v1/chat/completions`, {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({model:m, messages:[{role:'user', content:'hi'}], max_tokens:5})
-        }));
-        await Promise.all(reqs);
-        history.push({role:'assistant', content:`✅ Done in ${Date.now()-start}ms`});
-        render(); loadDashboard();
+        })));
+        chatHistory.push({role:'assistant', content:`✅ Finished in ${Date.now()-s}ms`});
+        render();
     }
 
     function render() {
-        const win = document.getElementById('msgs');
-        win.innerHTML = history.map(h => `
-            <div class="message">
-                ${h.latency ? `<span class="latency-tag">${h.latency}ms</span>` : ''}
-                <b>${h.role}:</b> ${h.content}
-            </div>`).join('');
-        win.scrollTop = win.scrollHeight;
+        const b = document.getElementById('chat-box');
+        b.innerHTML = chatHistory.map(h => `<div class="msg">${h.latency?`<span class="lat">${h.latency}ms</span>`:''}<b>${h.role}:</b> ${h.content}</div>`).join('');
+        b.scrollTop = b.scrollHeight;
     }
 </script>
 </body>

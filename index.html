@@ -6,7 +6,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <title>NVIDIA NIM Proxy Dashboard</title>
     <style>
-        /* --- THEME VARIABLES (Fixes scuffed inversion) --- */
+        /* --- THEME VARIABLES --- */
         :root {
             --bg-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             --card-bg: white;
@@ -29,11 +29,7 @@
             --shadow: rgba(0,0,0,0.3);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -44,12 +40,8 @@
             transition: background 0.3s ease;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
 
-        /* --- FIXED HEADER (No more overlap) --- */
         .header {
             background: var(--card-bg);
             border-radius: 15px;
@@ -62,16 +54,8 @@
             gap: 20px;
         }
 
-        .header-text h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .header-text p {
-            color: var(--text-secondary);
-            font-size: 1.1em;
-        }
+        .header-text h1 { color: #667eea; margin-bottom: 10px; font-size: 2.5em; }
+        .header-text p { color: var(--text-secondary); font-size: 1.1em; }
 
         .theme-toggle {
             background: var(--stat-card-bg);
@@ -80,18 +64,9 @@
             border-radius: 50%;
             cursor: pointer;
             font-size: 1.5em;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.2s;
             color: var(--text-primary);
         }
 
-        .theme-toggle:hover {
-            transform: scale(1.1);
-        }
-
-        /* --- DASHBOARD SECTIONS --- */
         .dashboard-section, .config-section, .results-section, .chat-container {
             background: var(--card-bg);
             border-radius: 15px;
@@ -115,146 +90,49 @@
             text-align: center;
         }
 
-        .stat-card h4 {
-            font-size: 0.9em;
-            text-transform: uppercase;
-            color: #718096;
-            margin-bottom: 5px;
-        }
+        .stat-card .value { font-size: 1.8em; font-weight: 700; color: var(--text-primary); }
 
-        .stat-card .value {
-            font-size: 1.8em;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
+        .chart-container { height: 300px; width: 100%; }
 
-        .chart-container {
-            height: 300px;
-            width: 100%;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 600; }
         .input-group input, .input-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid var(--input-border);
-            border-radius: 8px;
-            font-size: 1em;
-            background: var(--card-bg);
-            color: var(--text-primary);
-            transition: border-color 0.3s;
+            width: 100%; padding: 12px 15px; border: 2px solid var(--input-border);
+            border-radius: 8px; background: var(--card-bg); color: var(--text-primary);
         }
 
-        .input-group input:focus, .input-group select:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; }
         button {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px;
         }
 
         .btn-primary { background: #667eea; color: white; }
         .btn-secondary { background: #48bb78; color: white; }
         .btn-info { background: #4299e1; color: white; }
+        .btn-danger { background: #f56565; color: white; }
 
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-online { background: #48bb78; }
-        .status-offline { background: #f56565; }
-        .status-checking { background: #ed8936; animation: pulse 1.5s infinite; }
-
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-        .model-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .model-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        /* --- CHAT STYLES --- */
+        .chat-container { display: none; }
         .chat-container.active { display: block; }
 
         .chat-messages {
-            height: 500px;
-            overflow-y: auto;
-            border: 2px solid var(--input-border);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            background: var(--chat-bg);
+            height: 500px; overflow-y: auto; border: 2px solid var(--input-border);
+            border-radius: 10px; padding: 20px; margin-bottom: 20px; background: var(--chat-bg);
         }
 
         .message { margin-bottom: 20px; display: flex; gap: 15px; }
-
         .message-content {
-            flex: 1;
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px var(--shadow);
-            color: var(--text-primary);
+            flex: 1; background: var(--card-bg); padding: 15px;
+            border-radius: 10px; box-shadow: 0 2px 10px var(--shadow); color: var(--text-primary);
         }
 
-        .user-avatar { background: #667eea; color: white; }
-        .assistant-avatar { background: #48bb78; color: white; }
-        .message-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
         .chat-input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid var(--input-border);
-            border-radius: 10px;
-            font-size: 1em;
-            background: var(--card-bg);
-            color: var(--text-primary);
-            min-height: 60px;
+            flex: 1; padding: 15px; border: 2px solid var(--input-border);
+            border-radius: 10px; background: var(--card-bg); color: var(--text-primary); min-height: 60px;
         }
 
         @media (max-width: 768px) {
             .header { flex-direction: column; text-align: center; }
-            .header h1 { font-size: 1.8em; }
         }
     </style>
 </head>
@@ -262,106 +140,84 @@
     <div class="container">
         <div class="header">
             <div class="header-text">
-                <h1>🚀 NVIDIA NIM Proxy Dashboard</h1>
-                <p>Monitor your proxy status, discover available models, and chat with AI</p>
+                <h1>🚀 NVIDIA NIM Proxy</h1>
+                <p>Monitor status, discover models, and stress test your API</p>
             </div>
-            <button class="theme-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌓</button>
+            <button class="theme-toggle" onclick="toggleDarkMode()">🌓</button>
         </div>
 
-        <div class="dashboard-section" id="dashboardSection">
+        <div class="dashboard-section">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h4>Global Tokens Used</h4>
-                    <div class="value" id="globalTokenDisplay">---</div>
-                </div>
-                <div class="stat-card" style="border-top-color: #ed8936;">
-                    <h4>Estimated Cost (USD)</h4>
-                    <div class="value" id="costDisplay">$0.0000</div>
-                </div>
-                <div class="stat-card" style="border-top-color: #48bb78;">
-                    <h4>Recent Requests</h4>
-                    <div class="value" id="requestCountDisplay">---</div>
-                </div>
+                <div class="stat-card"><h4>Global Tokens</h4><div class="value" id="globalTokenDisplay">---</div></div>
+                <div class="stat-card" style="border-top-color: #ed8936;"><h4>Est. Cost (USD)</h4><div class="value" id="costDisplay">$0.0000</div></div>
+                <div class="stat-card" style="border-top-color: #48bb78;"><h4>Recent Req</h4><div class="value" id="requestCountDisplay">---</div></div>
             </div>
-            <div class="chart-container">
-                <canvas id="usageChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="usageChart"></canvas></div>
         </div>
 
         <div class="config-section">
-            <h2>⚙️ Configuration</h2>
+            <h2>⚙️ Control Panel</h2>
             <div class="input-group">
-                <label for="proxyUrl">Proxy Base URL</label>
-                <input type="text" id="proxyUrl" placeholder="https://your-proxy.up.railway.app">
+                <label>Proxy URL</label>
+                <input type="text" id="proxyUrl" placeholder="https://your-proxy.workers.dev">
             </div>
             <div class="button-group">
-                <button class="btn-primary" onclick="checkHealth()"><span>🏥</span> Check Health</button>
-                <button class="btn-secondary" onclick="fetchModels()"><span>🤖</span> Load Models</button>
-                <button class="btn-info" onclick="toggleChat()"><span>💬</span> Open Chat</button>
-                <button class="btn-info" onclick="openHealthPage()"><span>🌐</span> Open Health Page</button>
-                <button class="btn-info" onclick="openModelsPage()"><span>📋</span> Open Models API</button>
-                <button class="btn-primary" onclick="loadDashboard()" style="background: #718096;"><span>🔄</span> Sync Stats</button>
+                <button class="btn-primary" onclick="checkHealth()">🏥 Health</button>
+                <button class="btn-secondary" onclick="fetchModels()">🤖 Models</button>
+                <button class="btn-info" onclick="toggleChat()">💬 Chat</button>
+                <button class="btn-danger" onclick="runStressTest()">🔥 Stress Test</button>
+                <button class="btn-primary" onclick="loadDashboard()" style="background: #718096;">🔄 Sync</button>
             </div>
         </div>
 
         <div class="chat-container" id="chatContainer">
-            <h3>💬 Chat with AI</h3>
+            <h3>💬 AI Chat</h3>
             <div class="chat-controls" style="display: flex; gap: 10px; margin: 15px 0;">
-                <div class="input-group" style="margin: 0; flex: 1;">
-                    <select id="modelSelect"><option value="">Load models first...</option></select>
-                </div>
-                <button class="btn-secondary" onclick="clearChat()">🗑️ Clear Chat</button>
+                <select id="modelSelect" style="flex: 1; padding: 10px; border-radius: 8px;"><option value="">Select a model...</option></select>
+                <button class="btn-secondary" onclick="clearChat()">🗑️ Clear</button>
             </div>
-            <div class="chat-messages" id="chatMessages">
-                <div style="text-align: center; color: #999; margin-top: 200px;">Start a conversation below</div>
-            </div>
+            <div class="chat-messages" id="chatMessages"></div>
             <div class="chat-input-area" style="display: flex; gap:10px;">
-                <textarea class="chat-input" id="chatInput" placeholder="Type your message..." onkeydown="handleKeyPress(event)"></textarea>
-                <button class="btn-primary" id="sendBtn" onclick="sendMessage()">Send 📤</button>
+                <textarea class="chat-input" id="chatInput" placeholder="Type a message..."></textarea>
+                <button class="btn-primary" onclick="sendMessage()">Send</button>
             </div>
-        </div>
-
-        <div class="results-section" id="healthSection" style="display: none;">
-            <h3>Health Status</h3>
-            <div id="healthResults"></div>
         </div>
 
         <div class="results-section" id="modelsSection" style="display: none;">
             <h3>Available Models</h3>
-            <div class="input-group">
-                <input type="text" id="modelSearchInput" placeholder="🔍 Search Models..." onkeyup="filterModels()">
-            </div>
             <div id="modelsResults"></div>
         </div>
     </div>
 
     <script>
         let conversationHistory = [];
-        let availableModels = [];
         let usageChart = null;
 
         function toggleDarkMode() {
             const isDark = document.documentElement.classList.toggle('dark-mode');
             localStorage.setItem('darkMode', isDark);
-            if (usageChart) loadDashboard(); // Redraw chart for theme
+            if (usageChart) loadDashboard();
         }
 
         window.onload = function() {
             if (localStorage.getItem('darkMode') === 'true') document.documentElement.classList.add('dark-mode');
             const savedUrl = localStorage.getItem('proxyUrl');
             if (savedUrl) { document.getElementById('proxyUrl').value = savedUrl; loadDashboard(); }
-            const savedHistory = localStorage.getItem('chatHistory');
-            if (savedHistory) { conversationHistory = JSON.parse(savedHistory); renderMessages(); }
         };
+
+        function getProxyUrl() {
+            const url = document.getElementById('proxyUrl').value.trim().replace(/\/$/, '');
+            localStorage.setItem('proxyUrl', url);
+            return url;
+        }
 
         async function loadDashboard() {
             const baseUrl = getProxyUrl(); if (!baseUrl) return;
             try {
                 const globalRes = await fetch(`${baseUrl}/usage/global`);
                 const globalData = await globalRes.json();
-                const totalTokens = globalData.total || 0;
-                document.getElementById('globalTokenDisplay').innerText = totalTokens.toLocaleString();
-                document.getElementById('costDisplay').innerText = `$${((totalTokens / 1000000) * 5.00).toFixed(4)}`;
+                document.getElementById('globalTokenDisplay').innerText = (globalData.total || 0).toLocaleString();
+                document.getElementById('costDisplay').innerText = `$${(((globalData.total || 0) / 1000000) * 5.00).toFixed(4)}`;
 
                 const historyRes = await fetch(`${baseUrl}/usage/history`);
                 const historyData = await historyRes.json();
@@ -369,98 +225,69 @@
 
                 const ctx = document.getElementById('usageChart').getContext('2d');
                 if (usageChart) usageChart.destroy();
-                
                 const isDark = document.documentElement.classList.contains('dark-mode');
                 usageChart = new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: historyData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})),
                         datasets: [{
-                            label: 'Tokens Used',
+                            label: 'Tokens',
                             data: historyData.map(d => d.tokens_used),
-                            borderColor: '#667eea',
-                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                            fill: true, tension: 0.4
+                            borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', fill: true
                         }]
                     },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        scales: {
-                            y: { grid: { color: isDark ? '#4a5568' : '#f0f0f0' }, ticks: { color: isDark ? '#cbd5e0' : '#333' } },
-                            x: { grid: { display: false }, ticks: { color: isDark ? '#cbd5e0' : '#333' } }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
-            } catch (err) { console.error('Dashboard Error:', err); }
-        }
-
-        function getProxyUrl() {
-            const url = document.getElementById('proxyUrl').value.trim();
-            if (!url) return null;
-            const cleanUrl = url.replace(/\/$/, '');
-            localStorage.setItem('proxyUrl', cleanUrl);
-            return cleanUrl;
-        }
-
-        function filterModels() {
-            const searchTerm = document.getElementById('modelSearchInput').value.toLowerCase();
-            document.querySelectorAll('.model-card').forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(searchTerm) ? 'block' : 'none';
-            });
-        }
-
-        async function checkHealth() {
-            const baseUrl = getProxyUrl(); if (!baseUrl) return;
-            const healthResults = document.getElementById('healthResults');
-            document.getElementById('healthSection').style.display = 'block';
-            healthResults.innerHTML = 'Checking...';
-            try {
-                const response = await fetch(`${baseUrl}/health`);
-                const data = await response.json();
-                healthResults.innerHTML = `<div class="stat-card">Status: ${data.status.toUpperCase()}<br>Service: ${data.service}</div>`;
-            } catch (error) { healthResults.innerHTML = 'Offline'; }
+            } catch (err) { console.error(err); }
         }
 
         async function fetchModels() {
             const baseUrl = getProxyUrl(); if (!baseUrl) return;
-            document.getElementById('modelsSection').style.display = 'block';
             try {
                 const response = await fetch(`${baseUrl}/v1/models`);
                 const data = await response.json();
-                availableModels = data.data;
                 const select = document.getElementById('modelSelect');
-                select.innerHTML = availableModels.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
-                document.getElementById('modelsResults').innerHTML = `<div class="model-grid">` + 
-                    availableModels.map(m => `<div class="model-card" onclick="selectModelForChat('${m.id}')"><h4>${m.id}</h4><p>${m.owned_by}</p></div>`).join('') + `</div>`;
-            } catch (error) { alert('Error loading models'); }
+                select.innerHTML = data.data.map(m => `<option value="${m.id}">${m.id}</option>`).join('');
+                document.getElementById('modelsSection').style.display = 'block';
+                document.getElementById('modelsResults').innerHTML = `<div style="display:grid; gap:10px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">` + 
+                    data.data.map(m => `<div style="background:#667eea; color:white; padding:15px; border-radius:10px;">${m.id}</div>`).join('') + `</div>`;
+            } catch (e) { alert('Failed to load models'); }
         }
 
-        function selectModelForChat(id) { document.getElementById('modelSelect').value = id; toggleChat(); }
+        async function runStressTest() {
+            const baseUrl = getProxyUrl();
+            const model = document.getElementById('modelSelect').value;
+            if (!model) return alert("Select a model in the chat section first!");
+            
+            const count = 5;
+            alert(`🔥 Firing ${count} simultaneous hits to ${model}...`);
+            const startTime = Date.now();
+            
+            const requests = Array.from({ length: count }).map((_, i) => 
+                fetch(`${baseUrl}/v1/chat/completions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model, messages: [{ role: 'user', content: 'hi' }], max_tokens: 5 })
+                }).then(res => res.json())
+            );
+
+            try {
+                await Promise.all(requests);
+                alert(`Success! Handled in ${((Date.now() - startTime)/1000).toFixed(2)}s`);
+                loadDashboard();
+            } catch (e) { alert("Stress Test Failed!"); }
+        }
+
         function toggleChat() { document.getElementById('chatContainer').classList.toggle('active'); }
-        function clearChat() { if(confirm('Clear?')) { conversationHistory = []; localStorage.removeItem('chatHistory'); renderMessages(); } }
-
-        function renderMessages() {
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = conversationHistory.map(msg => `
-                <div class="message">
-                    <div class="message-avatar ${msg.role}-avatar">${msg.role === 'user' ? '👤' : '🤖'}</div>
-                    <div class="message-content"><strong>${msg.role === 'user' ? 'You' : 'Assistant'}</strong><br>${msg.content}</div>
-                </div>`).join('');
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function handleKeyPress(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
         async function sendMessage() {
             const baseUrl = getProxyUrl();
             const model = document.getElementById('modelSelect').value;
             const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            if (!model || !msg) return;
+            if (!model || !input.value) return;
 
-            conversationHistory.push({ role: 'user', content: msg });
+            const userMsg = input.value;
+            conversationHistory.push({ role: 'user', content: userMsg });
             input.value = ''; renderMessages();
 
             try {
@@ -471,14 +298,28 @@
                 });
                 const data = await res.json();
                 conversationHistory.push(data.choices[0].message);
-                localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
                 renderMessages();
-                setTimeout(loadDashboard, 1500);
-            } catch (e) { alert('Error sending message'); }
+                loadDashboard();
+            } catch (e) { alert('Chat Error'); }
         }
 
-        function openHealthPage() { window.open(`${getProxyUrl()}/health`, '_blank'); }
-        function openModelsPage() { window.open(`${getProxyUrl()}/v1/models`, '_blank'); }
+        function renderMessages() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = conversationHistory.map(msg => `
+                <div class="message"><div class="message-content"><strong>${msg.role}:</strong> ${msg.content}</div></div>
+            `).join('');
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function clearChat() { conversationHistory = []; renderMessages(); }
+        async function checkHealth() { 
+            const baseUrl = getProxyUrl();
+            try {
+                const res = await fetch(`${baseUrl}/health`);
+                const data = await res.json();
+                alert(`Proxy is ONLINE: ${data.status}`);
+            } catch (e) { alert("Proxy is OFFLINE"); }
+        }
     </script>
 </body>
 </html>

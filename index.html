@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Void Console v2.6</title>
+    <title>The Void Console v3.0 (Anti-Mid Ultra)</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #020617;
             --panel: #0f172a;
-            --accent: #60a5fa; /* Llama Blue */
-            --user: #f59e0b;   /* Gold */
+            --accent: #60a5fa; 
+            --user: #f59e0b;   
             --border: #1e293b;
             --text: #f1f5f9;
             --dim: #94a3b8;
+            --hater-red: #ef4444;
         }
 
         * { box-sizing: border-box; }
@@ -27,28 +28,44 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            transition: transform 0.1s;
         }
 
-        /* --- TOP BAR --- */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shaking { animation: shake 0.5s; animation-iteration-count: infinite; }
+
         header {
             background: var(--panel);
             padding: 12px 20px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
             border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background: #10b981;
             border-radius: 50%;
             box-shadow: 0 0 8px #10b981;
         }
 
-        input, select {
+        input, select, button {
             background: #1e293b;
             color: white;
             border: 1px solid var(--border);
@@ -57,17 +74,16 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 13px;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        input:focus, select:focus {
-            border-color: var(--accent);
+        button {
+            cursor: pointer;
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: bold;
+            border: none;
         }
 
-        #proxy-url { flex: 2; min-width: 200px; }
-        #model-select { flex: 1; min-width: 150px; }
-
-        /* --- CHAT AREA --- */
         #chat-container {
             flex: 1;
             overflow-y: auto;
@@ -77,13 +93,7 @@
             gap: 20px;
         }
 
-        .message {
-            max-width: 90%;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
+        .message { max-width: 95%; }
         .role-tag {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
@@ -95,39 +105,8 @@
 
         .user .role-tag { color: var(--user); }
         .bot .role-tag { color: var(--accent); }
+        .hater .role-tag { color: var(--hater-red); }
 
-        .content {
-            line-height: 1.6;
-            font-size: 15px;
-        }
-
-        .content p { margin: 0 0 10px 0; }
-        
-        /* Code Styling */
-        pre {
-            background: #000;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            border: 1px solid var(--border);
-            margin: 10px 0;
-        }
-
-        code {
-            font-family: 'JetBrains Mono', monospace;
-            background: rgba(255,255,255,0.1);
-            padding: 2px 5px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        pre code {
-            background: transparent;
-            padding: 0;
-            color: #cbd5e1;
-        }
-
-        /* --- INPUT AREA --- */
         footer {
             background: var(--panel);
             padding: 20px;
@@ -135,7 +114,6 @@
         }
 
         .input-wrapper {
-            position: relative;
             background: #1e293b;
             border-radius: 10px;
             padding: 12px;
@@ -151,55 +129,46 @@
             font-size: 16px;
             resize: none;
             outline: none;
-            min-height: 40px;
-            max-height: 200px;
         }
 
-        .hint {
-            font-size: 11px;
-            color: var(--dim);
-            margin-top: 8px;
-            text-align: right;
+        .hater-alert {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--hater-red);
+            color: var(--hater-red);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
         }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
     </style>
 </head>
-<body>
+<body id="body">
 
     <header>
-        <div class="status-dot"></div>
-        <div style="font-weight: bold; font-size: 14px; margin-right: 10px;">VOID_CONSOLE</div>
-        <input type="password" id="proxy-url" placeholder="Enter Proxy URL (twin, don't leak this)...">
-        <select id="model-select">
-            <optgroup label="Heavy Hitters">
-                <option value="meta-llama-3.1-405b">Llama 3.1 405B (Sigma)</option>
-                <option value="meta-llama-3.1-70b">Llama 3.1 70B</option>
-            </optgroup>
-            <optgroup label="Gen Z / Fast">
-                <option value="meta-llama-3.1-8b">Llama 3.1 8B (No Cap)</option>
-                <option value="meta-llama-3.2-3b">Llama 3.2 3B (Smol)</option>
-                <option value="mistral-large-2407">Mistral Large 3</option>
-            </optgroup>
+        <div class="status-dot" id="status-light"></div>
+        <input type="password" id="proxy-url" placeholder="Proxy URL here, twin...">
+        <button onclick="loadModels()">LOAD NIMS</button>
+        <select id="model-select" onchange="checkHate()">
+            <option value="">Select a NIM...</option>
         </select>
     </header>
 
     <div id="chat-container">
+        <div class="hater-alert" id="hater-banner">⚠️ CRITICAL AURA FAILURE: MID MODEL DETECTED ⚠️</div>
         <div class="message bot">
             <div class="role-tag">SYSTEM</div>
-            <div class="content">Console initialized. Ready to lock in, twin. 🗿</div>
+            <div class="content">Void v3.0 locked and loaded. DeepSeek and Devstral will be dealt with. 🗿</div>
         </div>
     </div>
 
     <footer>
         <div class="input-wrapper">
-            <textarea id="user-input" placeholder="Type a message or paste code..." rows="1"></textarea>
+            <textarea id="user-input" placeholder="Say something (no mid energy)..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleSend();}"></textarea>
         </div>
-        <div class="hint">Press <b>Enter</b> to send, <b>Shift+Enter</b> for new line</div>
     </footer>
 
     <script>
@@ -207,109 +176,117 @@
         const userInput = document.getElementById('user-input');
         const proxyInput = document.getElementById('proxy-url');
         const modelSelect = document.getElementById('model-select');
+        const statusLight = document.getElementById('status-light');
+        const haterBanner = document.getElementById('hater-banner');
+        const body = document.getElementById('body');
         let chatHistory = [];
 
-        // Auto-resize textarea
-        userInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+        proxyInput.value = localStorage.getItem('void_proxy') || '';
 
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
+        function isMid(modelName) {
+            const m = modelName.toLowerCase();
+            return m.includes('deepseek') || m.includes('devstral');
+        }
+
+        function checkHate() {
+            const val = modelSelect.value;
+            if (isMid(val)) {
+                haterBanner.innerText = `⚠️ STOP TWEAKING: ${val.includes('devstral') ? 'DEVSTRAL' : 'DEEPSEEK'} IS LITERALLY GARBAGE ⚠️`;
+                haterBanner.style.display = 'block';
+                statusLight.style.background = '#ef4444';
+                statusLight.style.boxShadow = '0 0 20px #ef4444';
+                body.classList.add('shaking');
+                setTimeout(() => body.classList.remove('shaking'), 400);
+            } else {
+                haterBanner.style.display = 'none';
+                statusLight.style.background = '#10b981';
+                statusLight.style.boxShadow = '0 0 8px #10b981';
             }
-        });
+        }
+
+        async function loadModels() {
+            const url = proxyInput.value.trim().replace(/\/$/, '');
+            if (!url) return;
+            localStorage.setItem('void_proxy', url);
+            
+            try {
+                const res = await fetch(`${url}/v1/models`);
+                const data = await res.json();
+                modelSelect.innerHTML = '<option value="">Select a NIM...</option>';
+                data.data.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = isMid(m.id) ? `🗑️ ${m.id} (SKILL ISSUE)` : m.id;
+                    modelSelect.appendChild(opt);
+                });
+                addMessage('bot', "NIMs fetched. Avoid the trash, twin. ✅");
+            } catch (e) {
+                addMessage('bot', "Proxy is lowkey ghosting. 💀");
+            }
+        }
 
         async function handleSend() {
             const text = userInput.value.trim();
-            const proxy = proxyInput.value.trim();
+            const proxy = proxyInput.value.trim().replace(/\/$/, '');
             const model = modelSelect.value;
 
-            if (!text) return;
-            if (!proxy) {
-                addMessage('system', "Twin, you lowkey forgot the proxy URL. I can't reach the void without it. 💀");
-                return;
+            if (!text || !proxy || !model) return;
+
+            if (isMid(model)) {
+                body.classList.add('shaking');
+                setTimeout(() => body.classList.remove('shaking'), 800);
+                const roast = model.toLowerCase().includes('devstral') 
+                    ? "Devstral? Really? You tryna be a 'senior engineer' at a mid-tier startup? Use Llama or go home. 🗿"
+                    : "DeepSeek is crine on bro. I'm literally only doing this because I have to. 💀";
+                addMessage('hater', roast);
             }
 
-            // Reset input
             userInput.value = '';
-            userInput.style.height = 'auto';
-
-            // User message
             addMessage('user', text);
             chatHistory.push({ role: 'user', content: text });
 
-            // Prepare AI response container
             const aiMsgDiv = addMessage('bot', '...');
             const contentDiv = aiMsgDiv.querySelector('.content');
-            contentDiv.innerHTML = '';
 
             try {
-                const response = await fetch(`${proxy.replace(/\/$/, '')}/v1/chat/completions`, {
+                const response = await fetch(`${proxy}/v1/chat/completions`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        model: model,
-                        messages: chatHistory,
-                        stream: true
-                    })
+                    body: JSON.stringify({ model, messages: chatHistory, stream: true })
                 });
-
-                if (!response.ok) throw new Error('Proxy tweaking');
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let fullResponse = '';
+                let fullText = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
-
                     for (const line of lines) {
                         if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                            try {
-                                const data = JSON.parse(line.substring(6));
-                                const content = data.choices[0].delta.content || '';
-                                fullResponse += content;
-                                contentDiv.innerHTML = marked.parse(fullResponse);
-                                chatContainer.scrollTop = chatContainer.scrollHeight;
-                            } catch (e) {
-                                console.error("Chunk parse error", e);
-                            }
+                            const data = JSON.parse(line.substring(6));
+                            fullText += data.choices[0].delta.content || '';
+                            contentDiv.innerHTML = marked.parse(fullText);
                         }
                     }
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
-                chatHistory.push({ role: 'assistant', content: fullResponse });
-
+                chatHistory.push({ role: 'assistant', content: fullText });
             } catch (err) {
-                contentDiv.innerHTML = `<span style="color:#ef4444;">Twin, the proxy is highkey cooked. Check the console or your URL. 💀</span>`;
+                contentDiv.innerHTML = `<span style="color:#ef4444;">Model probably self-destructed because it was mid. 💀</span>`;
             }
         }
 
         function addMessage(role, text) {
             const div = document.createElement('div');
-            div.className = `message ${role === 'bot' ? 'bot' : role === 'system' ? 'bot' : 'user'}`;
-            div.innerHTML = `
-                <div class="role-tag">${role === 'bot' ? 'AI_TWIN' : role}</div>
-                <div class="content">${marked.parse(text)}</div>
-            `;
+            div.className = `message ${role}`;
+            div.innerHTML = `<div class="role-tag">${role.toUpperCase()}</div><div class="content">${marked.parse(text)}</div>`;
             chatContainer.appendChild(div);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             return div;
         }
-
-        // Load saved proxy if exists
-        const savedProxy = localStorage.getItem('void_proxy');
-        if (savedProxy) proxyInput.value = savedProxy;
-
-        proxyInput.addEventListener('change', () => {
-            localStorage.setItem('void_proxy', proxyInput.value);
-        });
     </script>
 </body>
 </html>

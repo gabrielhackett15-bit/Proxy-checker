@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Void Console v3.0 (Anti-Mid Ultra)</title>
+    <title>The Void Console v4.0 (PEAK EDITION)</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -16,6 +16,8 @@
             --text: #f1f5f9;
             --dim: #94a3b8;
             --hater-red: #ef4444;
+            --sigma-green: #10b981;
+            --peak-gradient: linear-gradient(90deg, #06b6d4, #8b5cf6, #ec4899);
         }
 
         * { box-sizing: border-box; }
@@ -28,41 +30,57 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            transition: transform 0.1s;
+            transition: background 0.5s ease;
         }
 
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        /* PEAK MODE ANIMATIONS */
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px var(--accent); }
+            50% { box-shadow: 0 0 20px var(--accent); }
+            100% { box-shadow: 0 0 5px var(--accent); }
         }
 
-        .shaking { animation: shake 0.5s; animation-iteration-count: infinite; }
+        .peak-active header {
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 2px solid transparent;
+            border-image: var(--peak-gradient);
+            border-image-slice: 1;
+        }
+
+        .peak-badge {
+            display: none;
+            background: var(--peak-gradient);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .peak-active .peak-badge { display: inline-block; }
+        .peak-active .status-dot { animation: pulse 2s infinite; background: #fff !important; }
 
         header {
             background: var(--panel);
             padding: 12px 20px;
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
             border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
+            z-index: 10;
         }
 
         .status-dot {
             width: 10px;
             height: 10px;
-            background: #10b981;
+            background: var(--sigma-green);
             border-radius: 50%;
-            box-shadow: 0 0 8px #10b981;
+            box-shadow: 0 0 8px var(--sigma-green);
+            transition: all 0.3s;
         }
 
         input, select, button {
@@ -76,13 +94,9 @@
             outline: none;
         }
 
-        button {
-            cursor: pointer;
-            background: var(--accent);
-            color: var(--bg);
-            font-weight: bold;
-            border: none;
-        }
+        button { cursor: pointer; font-weight: bold; border: none; }
+        .btn-nim { background: var(--accent); color: var(--bg); }
+        .btn-clear { background: #334155; color: white; }
 
         #chat-container {
             flex: 1;
@@ -93,19 +107,20 @@
             gap: 20px;
         }
 
-        .message { max-width: 95%; }
+        .message { max-width: 95%; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .role-tag {
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .user .role-tag { color: var(--user); }
         .bot .role-tag { color: var(--accent); }
-        .hater .role-tag { color: var(--hater-red); }
+        .peak-active .bot .role-tag { color: #fff; text-shadow: 0 0 5px #8b5cf6; }
 
         footer {
             background: var(--panel);
@@ -130,44 +145,31 @@
             resize: none;
             outline: none;
         }
-
-        .hater-alert {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid var(--hater-red);
-            color: var(--hater-red);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            display: none;
-            text-align: center;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
     </style>
 </head>
 <body id="body">
 
-    <header>
+    <header id="main-header">
         <div class="status-dot" id="status-light"></div>
-        <input type="password" id="proxy-url" placeholder="Proxy URL here, twin...">
-        <button onclick="loadModels()">LOAD NIMS</button>
-        <select id="model-select" onchange="checkHate()">
+        <div class="peak-badge">Peak Mode</div>
+        <input type="password" id="proxy-url" placeholder="Proxy URL...">
+        <button class="btn-nim" onclick="loadModels()">LOAD NIMS</button>
+        <select id="model-select" onchange="checkVibe()">
             <option value="">Select a NIM...</option>
         </select>
+        <button class="btn-clear" onclick="clearChat()">CLEAR</button>
     </header>
 
     <div id="chat-container">
-        <div class="hater-alert" id="hater-banner">⚠️ CRITICAL AURA FAILURE: MID MODEL DETECTED ⚠️</div>
         <div class="message bot">
             <div class="role-tag">SYSTEM</div>
-            <div class="content">Void v3.0 locked and loaded. DeepSeek and Devstral will be dealt with. 🗿</div>
+            <div class="content">Void v4.0. Select a Goat model to activate Peak Mode. 🗿</div>
         </div>
     </div>
 
     <footer>
         <div class="input-wrapper">
-            <textarea id="user-input" placeholder="Say something (no mid energy)..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleSend();}"></textarea>
+            <textarea id="user-input" placeholder="Type a message..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();handleSend();}"></textarea>
         </div>
     </footer>
 
@@ -177,28 +179,38 @@
         const proxyInput = document.getElementById('proxy-url');
         const modelSelect = document.getElementById('model-select');
         const statusLight = document.getElementById('status-light');
-        const haterBanner = document.getElementById('hater-banner');
         const body = document.getElementById('body');
         let chatHistory = [];
 
         proxyInput.value = localStorage.getItem('void_proxy') || '';
 
-        function isMid(modelName) {
-            const m = modelName.toLowerCase();
-            return m.includes('deepseek') || m.includes('devstral');
+        function clearChat() {
+            chatHistory = [];
+            chatContainer.innerHTML = `<div class="message bot"><div class="role-tag">SYSTEM</div><div class="content">Memory purged. Aura reset. ✅</div></div>`;
         }
 
-        function checkHate() {
+        function isMid(m) {
+            const name = m.toLowerCase();
+            return name.includes('deepseek') || name.includes('devstral');
+        }
+
+        function isPeak(m) {
+            const name = m.toLowerCase();
+            if (isMid(name)) return false;
+            return name.includes('llama') || name.includes('mistral');
+        }
+
+        function checkVibe() {
             const val = modelSelect.value;
+            body.classList.remove('peak-active');
+            
             if (isMid(val)) {
-                haterBanner.innerText = `⚠️ STOP TWEAKING: ${val.includes('devstral') ? 'DEVSTRAL' : 'DEEPSEEK'} IS LITERALLY GARBAGE ⚠️`;
-                haterBanner.style.display = 'block';
                 statusLight.style.background = '#ef4444';
-                statusLight.style.boxShadow = '0 0 20px #ef4444';
-                body.classList.add('shaking');
-                setTimeout(() => body.classList.remove('shaking'), 400);
+                statusLight.style.boxShadow = '0 0 15px #ef4444';
+            } else if (isPeak(val)) {
+                body.classList.add('peak-active');
+                statusLight.style.background = '#fff';
             } else {
-                haterBanner.style.display = 'none';
                 statusLight.style.background = '#10b981';
                 statusLight.style.boxShadow = '0 0 8px #10b981';
             }
@@ -208,7 +220,6 @@
             const url = proxyInput.value.trim().replace(/\/$/, '');
             if (!url) return;
             localStorage.setItem('void_proxy', url);
-            
             try {
                 const res = await fetch(`${url}/v1/models`);
                 const data = await res.json();
@@ -216,30 +227,19 @@
                 data.data.forEach(m => {
                     const opt = document.createElement('option');
                     opt.value = m.id;
-                    opt.textContent = isMid(m.id) ? `🗑️ ${m.id} (SKILL ISSUE)` : m.id;
+                    let prefix = isPeak(m.id) ? '👑 ' : (isMid(m.id) ? '🗑️ ' : '');
+                    opt.textContent = prefix + m.id;
                     modelSelect.appendChild(opt);
                 });
-                addMessage('bot', "NIMs fetched. Avoid the trash, twin. ✅");
-            } catch (e) {
-                addMessage('bot', "Proxy is lowkey ghosting. 💀");
-            }
+                addMessage('bot', "NIMs loaded. The Goats are ready. 🗿");
+            } catch (e) { addMessage('bot', "Proxy error. RIP. 💀"); }
         }
 
         async function handleSend() {
             const text = userInput.value.trim();
             const proxy = proxyInput.value.trim().replace(/\/$/, '');
             const model = modelSelect.value;
-
             if (!text || !proxy || !model) return;
-
-            if (isMid(model)) {
-                body.classList.add('shaking');
-                setTimeout(() => body.classList.remove('shaking'), 800);
-                const roast = model.toLowerCase().includes('devstral') 
-                    ? "Devstral? Really? You tryna be a 'senior engineer' at a mid-tier startup? Use Llama or go home. 🗿"
-                    : "DeepSeek is crine on bro. I'm literally only doing this because I have to. 💀";
-                addMessage('hater', roast);
-            }
 
             userInput.value = '';
             addMessage('user', text);
@@ -247,6 +247,7 @@
 
             const aiMsgDiv = addMessage('bot', '...');
             const contentDiv = aiMsgDiv.querySelector('.content');
+            let fullText = '';
 
             try {
                 const response = await fetch(`${proxy}/v1/chat/completions`, {
@@ -257,25 +258,26 @@
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let fullText = '';
-
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
                     for (const line of lines) {
-                        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
-                            const data = JSON.parse(line.substring(6));
-                            fullText += data.choices[0].delta.content || '';
-                            contentDiv.innerHTML = marked.parse(fullText);
+                        const cleanLine = line.trim();
+                        if (cleanLine.startsWith('data: ') && cleanLine !== 'data: [DONE]') {
+                            try {
+                                const data = JSON.parse(cleanLine.substring(6));
+                                fullText += data.choices[0].delta.content || '';
+                                contentDiv.innerHTML = marked.parse(fullText);
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            } catch (e) {}
                         }
                     }
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
                 }
                 chatHistory.push({ role: 'assistant', content: fullText });
             } catch (err) {
-                contentDiv.innerHTML = `<span style="color:#ef4444;">Model probably self-destructed because it was mid. 💀</span>`;
+                contentDiv.innerHTML = `<span style="color:#ef4444;">Connection failed. Skill issue. 💀</span>`;
             }
         }
 

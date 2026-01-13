@@ -430,16 +430,16 @@
             .header h1 {
                 font-size: 1.8em;
             }
-
+            
             .button-group {
                 flex-direction: column;
             }
-
+            
             button {
                 width: 100%;
                 justify-content: center;
             }
-
+            
             .model-grid {
                 grid-template-columns: 1fr;
             }
@@ -530,6 +530,16 @@
             <div class="info-box">
                 <strong>💡 How to use:</strong> Click "Copy" on any model card to copy the model name, or click "Use in Chat" to select it for chatting.
             </div>
+            <div class="input-group" style="margin-top: 20px;">
+                <label for="modelSearch">🔍 Search Models</label>
+                <input 
+                    type="text" 
+                    id="modelSearch" 
+                    placeholder="Search by name, provider, or capability (e.g., deepseek, vision, reasoning)..."
+                    oninput="filterModels()"
+                >
+            </div>
+            <div id="modelStats" style="margin-top: 10px; color: #666;"></div>
             <div id="modelsResults"></div>
         </div>
     </div>
@@ -537,13 +547,14 @@
     <script>
         let conversationHistory = [];
         let availableModels = [];
+        let allModelsData = []; // Store all models for filtering
 
         window.onload = function() {
             const savedUrl = localStorage.getItem('proxyUrl');
             if (savedUrl) {
                 document.getElementById('proxyUrl').value = savedUrl;
             }
-
+            
             const savedHistory = localStorage.getItem('chatHistory');
             if (savedHistory) {
                 conversationHistory = JSON.parse(savedHistory);
@@ -568,7 +579,7 @@
 
             const healthSection = document.getElementById('healthSection');
             const healthResults = document.getElementById('healthResults');
-
+            
             healthSection.style.display = 'block';
             healthResults.innerHTML = '<div class="status-card"><p><span class="status-indicator status-checking"></span>Checking proxy health...</p></div>';
 
@@ -609,7 +620,7 @@
 
             const modelsSection = document.getElementById('modelsSection');
             const modelsResults = document.getElementById('modelsResults');
-
+            
             modelsSection.style.display = 'block';
             modelsResults.innerHTML = '<div class="status-card"><p><span class="loading"></span> Loading available models...</p></div>';
 
@@ -619,30 +630,10 @@
 
                 if (response.ok && data.data && data.data.length > 0) {
                     availableModels = data.data;
+                    allModelsData = data.data; // Store for filtering
                     updateModelSelect();
-
-                    const modelCards = data.data.map(model => `
-                        <div class="model-card">
-                            <h4>${model.id}</h4>
-                            <p>Owner: ${model.owned_by}</p>
-                            <p>Type: ${model.object}</p>
-                            <button class="copy-btn" onclick="copyModelName('${model.id}')">
-                                📋 Copy Model Name
-                            </button>
-                            <button class="copy-btn" onclick="selectModelForChat('${model.id}')">
-                                💬 Use in Chat
-                            </button>
-                        </div>
-                    `).join('');
-
-                    modelsResults.innerHTML = `
-                        <div class="success-message">
-                            ✅ Found ${data.data.length} available models
-                        </div>
-                        <div class="model-grid">
-                            ${modelCards}
-                        </div>
-                    `;
+                    renderModels(data.data);
+                    updateModelStats(data.data.length, data.data.length);
                 } else {
                     throw new Error('No models found');
                 }
@@ -654,6 +645,93 @@
                     • Make sure your proxy is deployed correctly<br>
                     • Check Railway logs for errors</div>
                 `;
+            }
+        }
+
+        function renderModels(models) {
+            const modelsResults = document.getElementById('modelsResults');
+            
+            if (models.length === 0) {
+                modelsResults.innerHTML = `
+                    <div class="info-box" style="margin-top: 20px;">
+                        No models match your search. Try different keywords!
+                    </div>
+                `;
+                return;
+            }
+
+            const modelCards = models.map(model => {
+                const tags = getModelTags(model.id);
+                return `
+                    <div class="model-card">
+                        <h4>${model.id}</h4>
+                        <p>Owner: ${model.owned_by}</p>
+                        <p>Type: ${model.object}</p>
+                        ${tags ? `<p style="font-size: 0.85em; opacity: 0.8;">🏷️ ${tags}</p>` : ''}
+                        <button class="copy-btn" onclick="copyModelName('${model.id}')">
+                            📋 Copy Model Name
+                        </button>
+                        <button class="copy-btn" onclick="selectModelForChat('${model.id}')">
+                            💬 Use in Chat
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            modelsResults.innerHTML = `
+                <div class="success-message">
+                    ✅ Showing ${models.length} model${models.length !== 1 ? 's' : ''}
+                </div>
+                <div class="model-grid">
+                    ${modelCards}
+                </div>
+            `;
+        }
+
+        function getModelTags(modelId) {
+            const lower = modelId.toLowerCase();
+            const tags = [];
+            
+            if (lower.includes('vision') || lower.includes('vlm') || lower.includes('multimodal')) tags.push('Vision');
+            if (lower.includes('reasoning') || lower.includes('r1') || lower.includes('think')) tags.push('Reasoning');
+            if (lower.includes('code') || lower.includes('coder')) tags.push('Code');
+            if (lower.includes('embed')) tags.push('Embedding');
+            if (lower.includes('reward') || lower.includes('guard')) tags.push('Safety');
+            if (lower.includes('nano') || lower.includes('mini') || lower.includes('1b') || lower.includes('2b') || lower.includes('3b')) tags.push('Small');
+            if (lower.includes('405b') || lower.includes('340b') || lower.includes('253b') || lower.includes('675b')) tags.push('Large');
+            
+            return tags.join(', ');
+        }
+
+        function filterModels() {
+            const searchTerm = document.getElementById('modelSearch').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderModels(allModelsData);
+                updateModelStats(allModelsData.length, allModelsData.length);
+                return;
+            }
+
+            const filtered = allModelsData.filter(model => {
+                const modelId = model.id.toLowerCase();
+                const ownedBy = model.owned_by.toLowerCase();
+                const tags = getModelTags(model.id).toLowerCase();
+                
+                return modelId.includes(searchTerm) || 
+                       ownedBy.includes(searchTerm) || 
+                       tags.includes(searchTerm);
+            });
+
+            renderModels(filtered);
+            updateModelStats(filtered.length, allModelsData.length);
+        }
+
+        function updateModelStats(showing, total) {
+            const statsEl = document.getElementById('modelStats');
+            if (showing === total) {
+                statsEl.innerHTML = `Showing all ${total} models`;
+            } else {
+                statsEl.innerHTML = `Showing ${showing} of ${total} models`;
             }
         }
 
@@ -689,7 +767,7 @@
 
         function renderMessages() {
             const chatMessages = document.getElementById('chatMessages');
-
+            
             if (conversationHistory.length === 0) {
                 chatMessages.innerHTML = `
                     <div style="text-align: center; color: #999; margin-top: 200px;">
@@ -734,7 +812,7 @@
             const modelSelect = document.getElementById('modelSelect');
             const chatInput = document.getElementById('chatInput');
             const sendBtn = document.getElementById('sendBtn');
-
+            
             const model = modelSelect.value;
             const message = chatInput.value.trim();
 
@@ -756,7 +834,7 @@
             chatInput.value = '';
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<span class="loading"></span> Sending...';
-
+            
             renderMessages();
 
             try {
@@ -781,7 +859,7 @@
                         role: 'assistant',
                         content: assistantMessage
                     });
-
+                    
                     localStorage.setItem('chatHistory', JSON.stringify(conversationHistory));
                     renderMessages();
                 } else {
@@ -806,7 +884,7 @@
                 const originalText = originalButton.innerHTML;
                 originalButton.innerHTML = '✅ Copied!';
                 originalButton.style.background = 'rgba(72, 187, 120, 0.3)';
-
+                
                 setTimeout(() => {
                     originalButton.innerHTML = originalText;
                     originalButton.style.background = 'rgba(255,255,255,0.2)';

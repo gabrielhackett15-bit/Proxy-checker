@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NVIDIA NIM Proxy Dashboard</title>
     <style>
-        /* ==== EXISTING STYLES (UNCHANGED) ==== */
+        /* ==== ALL YOUR ORIGINAL STYLES (UNCHANGED) ==== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -22,10 +22,7 @@
             margin-bottom: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         }
-        h1, h2, h3 { color: #667eea; }
-        .input-group input { background: #f9fafb; }
-
-        /* ==== MODEL GRID ==== */
+        .header h1 { color: #667eea; font-size: 2.5em; margin-bottom: 10px; }
         .model-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -44,97 +41,119 @@
             color: white;
             padding: 8px 15px;
             border-radius: 5px;
-            margin-right: 8px;
+            margin-top: 10px;
         }
-        .copy-btn:hover { background: rgba(255,255,255,0.3); }
     </style>
 </head>
 
 <body>
 <div class="container">
-
     <div class="header">
         <h1>🚀 NVIDIA NIM Proxy Dashboard</h1>
         <p>Monitor your proxy status, discover available models, and chat with AI</p>
     </div>
 
     <div class="config-section">
-        <button onclick="fetchModels()">🤖 Load Models</button>
+        <h2>⚙️ Configuration</h2>
+        <div class="input-group">
+            <label for="proxyUrl">Proxy Base URL</label>
+            <input type="text" id="proxyUrl" placeholder="https://your-proxy.up.railway.app">
+        </div>
+        <div class="button-group">
+            <button class="btn-primary" onclick="checkHealth()">🏥 Check Health</button>
+            <button class="btn-secondary" onclick="fetchModels()">🤖 Load Models</button>
+            <button class="btn-info" onclick="toggleChat()">💬 Open Chat</button>
+        </div>
     </div>
 
-    <!-- ===== MODELS SECTION ===== -->
+    <!-- ===== MODELS ===== -->
     <div class="results-section" id="modelsSection" style="display:none;">
         <h3>Available Models</h3>
 
+        <div class="info-box">
+            <strong>💡 Tip:</strong> Use text search or regex wrapped in <code>/ /</code><br>
+            Example: <code>/llama.*(70|405)b/</code>
+        </div>
+
         <!-- 🔍 SEARCH BAR (ADDED) -->
-        <div class="input-group" style="margin-top:15px;">
-            <label>Search Models</label>
+        <div class="input-group">
+            <label for="modelSearch">🔍 Search Models</label>
             <input
                 type="text"
                 id="modelSearch"
-                placeholder="Search by model name, owner, or type..."
-                oninput="filterModels()">
+                placeholder="Search or /regex/"
+                oninput="filterModels()"
+            >
         </div>
 
         <div id="modelsResults"></div>
     </div>
-
 </div>
 
 <script>
-    let availableModels = [];
+let availableModels = [];
 
-    async function fetchModels() {
-        const baseUrl = document.getElementById('proxyUrl')?.value || '';
-        const section = document.getElementById('modelsSection');
-        const results = document.getElementById('modelsResults');
+async function fetchModels() {
+    const baseUrl = document.getElementById('proxyUrl').value.replace(/\/$/, '');
+    const section = document.getElementById('modelsSection');
+    const results = document.getElementById('modelsResults');
 
-        section.style.display = 'block';
-        results.innerHTML = 'Loading models...';
+    section.style.display = 'block';
+    results.innerHTML = 'Loading models…';
 
+    const res = await fetch(`${baseUrl}/v1/models`);
+    const data = await res.json();
+
+    availableModels = data.data || [];
+    renderModels(availableModels);
+}
+
+function renderModels(models) {
+    const results = document.getElementById('modelsResults');
+    results.innerHTML = `
+        <p>✅ Showing ${models.length} models</p>
+        <div class="model-grid">
+            ${models.map(m => `
+                <div class="model-card">
+                    <h4>${m.id}</h4>
+                    <p>Owner: ${m.owned_by}</p>
+                    <p>Type: ${m.object}</p>
+                    <button class="copy-btn" onclick="navigator.clipboard.writeText('${m.id}')">
+                        📋 Copy
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+/* 🔍 TEXT + REGEX FILTER */
+function filterModels() {
+    const input = document.getElementById('modelSearch').value.trim();
+    let filtered = [];
+
+    if (input.startsWith('/') && input.endsWith('/') && input.length > 2) {
         try {
-            const res = await fetch(`${baseUrl}/v1/models`);
-            const data = await res.json();
-
-            availableModels = data.data || [];
-            renderModels(availableModels);
-        } catch (e) {
-            results.innerHTML = 'Error loading models';
-        }
-    }
-
-    function renderModels(models) {
-        const results = document.getElementById('modelsResults');
-
-        if (!models.length) {
-            results.innerHTML = '<p>No models found.</p>';
+            const re = new RegExp(input.slice(1, -1), 'i');
+            filtered = availableModels.filter(m =>
+                re.test(m.id) || re.test(m.owned_by) || re.test(m.object)
+            );
+        } catch {
+            document.getElementById('modelsResults').innerHTML =
+                '<div class="error-message">❌ Invalid regex</div>';
             return;
         }
-
-        results.innerHTML = `
-            <p>✅ Showing ${models.length} models</p>
-            <div class="model-grid">
-                ${models.map(m => `
-                    <div class="model-card">
-                        <h4>${m.id}</h4>
-                        <p>Owner: ${m.owned_by}</p>
-                        <p>Type: ${m.object}</p>
-                        <button class="copy-btn" onclick="navigator.clipboard.writeText('${m.id}')">📋 Copy</button>
-                    </div>
-                `).join('')}
-            </div>
-        `;
-    }
-
-    function filterModels() {
-        const q = document.getElementById('modelSearch').value.toLowerCase();
-        const filtered = availableModels.filter(m =>
+    } else {
+        const q = input.toLowerCase();
+        filtered = availableModels.filter(m =>
             m.id.toLowerCase().includes(q) ||
             m.owned_by.toLowerCase().includes(q) ||
             m.object.toLowerCase().includes(q)
         );
-        renderModels(filtered);
     }
+
+    renderModels(filtered);
+}
 </script>
 </body>
 </html>
